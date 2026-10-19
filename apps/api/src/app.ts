@@ -1,0 +1,72 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import express from 'express';
+import type { Express, Request, Response } from 'express';
+import type { Pool } from 'pg';
+import type { Config } from './config.ts';
+import { poolDb } from './db.ts';
+import { makeErrorHandler, notFoundHandler } from './errors.ts';
+import { FailureLimiter, authenticate, csrfGuard, originGuard, passwordChangeGuard, requestContext } from './middleware.ts';
+import type { Logger } from './middleware.ts';
+import { authRouters } from './routes/auth.ts';
+import { projectsRouter } from './routes/projects.ts';
+import { usersRouter } from './routes/users.ts';
+
+export interface AppDeps {
+  pool: Pool;
+  config: Config;
+  log?: Logger;
+}
+
+export const stdoutLogger: Logger = (line) => {
+  process.stdout.write(`${JSON.stringify({ t: new Date().toISOString(), ...line })}\n`);
+};
+
+export function createApp({ pool, config, log = stdoutLogger }: AppDeps): Express {
+  const app = express();
+  app.disable('x-powered-by');
+  app.disable('etag');
+  if (config.trustProxy) {
+    const v = config.trustProxy;
+    app.set('trust proxy', /^\d+$/.test(v) ? Number(v) : v === 'true' ? true : v);
+  }
+
+  app.use(requestContext(config, log));
+
+  const api = express.Router();
+  api.use(express.json({ limit: config.bodyLimit, type: 'application/json' }));
+  api.use(originGuard(config));
+
+  api.get('/health', async (_req: Request, res: Response) => {
+    await poolDb(pool).query('SELECT 1');
+    res.json({ ok: true, time: new Date().toISOString() });
+  });
+
+  const limiter = new FailureLimiter(20, 10 * 60_000);
+  const auth = authRouters(pool, config, limiter);
+  api.use('/auth', auth.pub);
+
+  // از این‌جا به بعد نشست معتبر، CSRF و (در صورت لزوم) تغییر گذرواژه الزامی است
+  api.use(authenticate(pool, config), csrfGuard, passwordChangeGuard);
+  api.use('/auth', auth.session);
+  api.use(usersRouter(pool));
+  api.use(projectsRouter(pool));
+
+  app.use('/api', api);
+  app.use('/api', notFoundHandler);
+
+  if (config.webDist) {
+    const dist = resolve(config.webDist);
+    const index = resolve(dist, 'index.html');
+    if (existsSync(index)) {
+      app.use(express.static(dist, { index: false, maxAge: '1h', setHeaders: (res, p) => { if (p.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache'); } }));
+      app.get(/^\/(?!api\/).*/, (_req: Request, res: Response) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.sendFile(index);
+      });
+    }
+  }
+
+  app.use(makeErrorHandler(log));
+  return app;
+}

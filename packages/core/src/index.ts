@@ -16,3 +16,4 @@ export * from './project.ts';
 export * from './legacy.ts';
 export * from './structure.ts';
 export * from './taskPatch.ts';
+export * from './permissions.ts';

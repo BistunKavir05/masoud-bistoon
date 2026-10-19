@@ -7,6 +7,11 @@ on:
 permissions:
   contents: write
 
+# bash صریح، pipefail را روشن می‌کند؛ بدون آن شکست آزمون پشت `| tee` پنهان می‌ماند.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   core:
     name: هسته (typecheck + آزمون واحد)
@@ -54,10 +59,51 @@ jobs:
           name: oracle
           path: ci-out/oracle
 
+  api:
+    name: API (typecheck + آزمون با PostgreSQL)
+    runs-on: ubuntu-latest
+    needs: core
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: آزمون SQL طرح پایگاه‌داده
+        run: |
+          mkdir -p ci-out/api
+          PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres ./db/tests/run.sh 2>&1 | tee ci-out/api/sql.log
+      - name: typecheck
+        run: npm run typecheck -w @bistoon/api 2>&1 | tee ci-out/api/typecheck.log
+      - name: آزمون API
+        run: npm test -w @bistoon/api 2>&1 | tee ci-out/api/test.log
+      - name: برش لاک‌فایل
+        if: always()
+        run: cp -f package-lock.json ci-out/api/package-lock.json 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api
+          path: ci-out/api
+
   publish-logs:
     name: انتشار گزارش‌ها در شاخه‌ی ci-logs
     runs-on: ubuntu-latest
-    needs: [core, oracle]
+    needs: [core, oracle, api]
     if: always() && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
