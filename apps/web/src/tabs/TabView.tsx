@@ -3,6 +3,7 @@ import { PageHead, Alert } from '../ui/controls.tsx';
 import { CharterTab } from './charter/CharterTab.tsx';
 import { DashboardTab } from './dashboard/DashboardTab.tsx';
 import { FinanceTab } from './finance/FinanceTab.tsx';
+import { GanttTab } from './gantt/GanttTab.tsx';
 import { ChangesTab, DecisionsTab, RisksTab } from './records/RisksTab.tsx';
 import { ResourcesTab } from './resources/ResourcesTab.tsx';
 import { ScurveTab } from './scurve/ScurveTab.tsx';
@@ -25,6 +26,8 @@ export function TabView({ tab }: { tab: TabKey }) {
       return <ChangesTab />;
     case 'dec':
       return <DecisionsTab />;
+    case 'gantt':
+      return <GanttTab />;
     case 'scurve':
       return <ScurveTab />;
     case 'tasks':
