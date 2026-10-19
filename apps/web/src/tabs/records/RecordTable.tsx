@@ -7,11 +7,12 @@ import { DateField } from '../../ui/DateField.tsx';
 import { confirmDialog, openDialog } from '../../ui/dialogs.tsx';
 
 export type RecordBase = { id: number; version: number };
+type Versioned = { version: number };
 
-export interface FieldDef<T> {
+export interface FieldDef<T extends Versioned> {
   key: Extract<keyof T, string>;
   label: string;
-  kind: 'text' | 'long' | 'int' | 'date' | 'select' | 'bool';
+  kind: 'text' | 'long' | 'int' | 'num' | 'date' | 'select' | 'bool';
   options?: readonly { value: string; label: string }[];
   /** برای select: گزینه‌ی خالی (مقدار null) */
   emptyLabel?: string;
@@ -25,16 +26,27 @@ export interface FieldDef<T> {
   when?: boolean;
 }
 
-export interface ColumnDef<T> {
+export interface ColumnDef<T extends Versioned> {
   header: string;
   cell: (row: T) => ReactNode;
   className?: string;
 }
 
-export interface RecordConfig<T extends RecordBase> {
+/** مشخصات یک فرم ویرایش: برای ردیف‌های یک جدول یا برای یک «تک‌رکورد» (مثل منشور و قرارداد) */
+export interface FormSpec<T extends Versioned> {
   path: string;
   noun: string;
   fields: FieldDef<T>[];
+  testPrefix: string;
+  /** تک‌رکورد: آدرس بدون شناسه و فقط ویرایش (بدون ایجاد) */
+  singleton?: boolean;
+  /** مقدار اولیه‌ی فرم ایجاد */
+  blank?: () => Partial<T>;
+  /** افزودن «ریشه‌ی» ثابت به بدنه‌ی ایجاد (مثلاً وضعیت اولیه) */
+  createExtra?: Partial<T>;
+}
+
+export interface RecordConfig<T extends RecordBase> extends FormSpec<T> {
   columns: ColumnDef<T>[];
   blank: () => Partial<T>;
   canEdit: boolean;
@@ -43,21 +55,18 @@ export interface RecordConfig<T extends RecordBase> {
   rowActions?: (row: T, save: (patch: Partial<T>) => Promise<boolean>) => ReactNode;
   titleOf: (row: T) => string;
   emptyHint: string;
-  /** افزودن «ریشه‌ی» ثابت به بدنه‌ی ایجاد (مثلاً وضعیت اولیه) */
-  createExtra?: Partial<T>;
-  testPrefix: string;
 }
 
 function isEmpty(v: unknown): boolean {
   return v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
 }
 
-function RecordForm<T extends RecordBase>({ cfg, row, close }: { cfg: RecordConfig<T>; row: T | null; close: () => void }) {
+function RecordForm<T extends Versioned>({ cfg, row, close }: { cfg: FormSpec<T>; row: T | null; close: () => void }) {
   const ps = useProjectState();
   const pid = ps.bundle!.project.id;
   const fields = cfg.fields.filter((f) => f.when !== false);
   const [vals, setVals] = useState<Record<string, unknown>>(() => {
-    const base = row ? ({ ...row } as Record<string, unknown>) : ({ ...cfg.blank() } as Record<string, unknown>);
+    const base = row ? ({ ...row } as Record<string, unknown>) : ({ ...(cfg.blank?.() ?? {}) } as Record<string, unknown>);
     return base;
   });
   const { busy, run } = useAction();
@@ -69,7 +78,7 @@ function RecordForm<T extends RecordBase>({ cfg, row, close }: { cfg: RecordConf
       if (row) {
         const patch: Record<string, unknown> = { version: row.version };
         for (const k of changedKeys) patch[k] = normalize(vals[k]);
-        await apiPatch(`/projects/${pid}/${cfg.path}/${row.id}`, patch);
+        await apiPatch(cfg.singleton ? `/projects/${pid}/${cfg.path}` : `/projects/${pid}/${cfg.path}/${(row as unknown as RecordBase).id}`, patch);
       } else {
         const body: Record<string, unknown> = { ...(cfg.createExtra as Record<string, unknown> | undefined) };
         for (const f of fields) if (vals[f.key] !== undefined) body[f.key] = normalize(vals[f.key]);
@@ -93,6 +102,8 @@ function RecordForm<T extends RecordBase>({ cfg, row, close }: { cfg: RecordConf
               return <TextAreaField key={f.key} {...common} wide value={String(v ?? '')} maxLength={20000} onChange={(x) => set(f.key, x)} />;
             case 'int':
               return <NumberField key={f.key} {...common} value={typeof v === 'number' ? v : null} integer min={f.min} max={f.max} onChange={(x) => set(f.key, x)} />;
+            case 'num':
+              return <NumberField key={f.key} {...common} value={typeof v === 'number' ? v : null} min={f.min} max={f.max} maxFraction={2} onChange={(x) => set(f.key, x)} />;
             case 'date':
               return <DateField key={f.key} {...common} value={(v as string | null) ?? null} allowEmpty onChange={(x) => set(f.key, x)} />;
             case 'bool':
@@ -114,6 +125,11 @@ function RecordForm<T extends RecordBase>({ cfg, row, close }: { cfg: RecordConf
   );
 }
 
+/** باز کردن فرم ویرایش (یا ایجاد، وقتی row = null) در گفتگوی درون‌برنامه */
+export function openFormDialog<T extends Versioned>(cfg: FormSpec<T>, row: T | null): void {
+  void openDialog(row ? `ویرایش ${cfg.noun}` : `${cfg.noun} جدید`, (close) => <RecordForm cfg={cfg} row={row} close={() => close()} />, { wide: true });
+}
+
 function normalize(v: unknown): unknown {
   return typeof v === 'string' ? v.trim() : v;
 }
@@ -125,9 +141,7 @@ export function RecordTable<T extends RecordBase>({ cfg, rows }: { cfg: RecordCo
   const { busy, run } = useAction();
   const edit = !archived && cfg.canEdit;
 
-  const openForm = (row: T | null): void => {
-    void openDialog(row ? `ویرایش ${cfg.noun}` : `${cfg.noun} جدید`, (close) => <RecordForm cfg={cfg} row={row} close={() => close()} />, { wide: true });
-  };
+  const openForm = (row: T | null): void => openFormDialog(cfg, row);
   const remove = async (row: T): Promise<void> => {
     const ok = await confirmDialog({ title: `حذف ${cfg.noun}`, danger: true, confirmLabel: 'حذف', message: <>«{cfg.titleOf(row)}» برای همیشه حذف می‌شود (در گزارش تغییرات می‌ماند). ادامه می‌دهید؟</> });
     if (!ok) return;
