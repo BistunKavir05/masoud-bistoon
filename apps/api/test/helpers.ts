@@ -120,3 +120,86 @@ export async function loggedIn(env: TestEnv, username: string, password = PASSWO
   if (r.status !== 200) throw new Error(`login failed for ${username}: ${r.status} ${JSON.stringify(r.body)}`);
   return c;
 }
+
+export interface World {
+  env: TestEnv;
+  admin: Client;
+  pm: Client;
+  fin: Client;
+  com: Client;
+  exp: Client;
+  mgr: Client;
+  pid: number;
+  ids: Record<string, number>;
+  /** منبع انسانی وصل به کاربر کارشناس */
+  expResourceId: number;
+}
+
+/** ادمین سیستم، شش کاربر با نقش‌های مختلف و یک پروژه با یک منبع وصل به کارشناس */
+export async function buildWorld(env: TestEnv, projectName = 'پروژه‌ی آزمون'): Promise<World> {
+  const ids: Record<string, number> = {};
+  const exists = await env.pool.query("SELECT id FROM users WHERE username = 'admin'");
+  if (exists.rowCount === 0) await insertUser(env.pool, 'admin', { admin: true });
+  for (const u of ['pm1', 'fin1', 'com1', 'exp1', 'mgr1']) {
+    const r = await env.pool.query('SELECT id FROM users WHERE username = $1', [u]);
+    ids[u] = r.rowCount ? Number(r.rows[0].id) : await insertUser(env.pool, u);
+  }
+  const admin = await loggedIn(env, 'admin');
+  const created = await admin.post('/api/projects', {
+    name: projectName,
+    start: '2026-03-21',
+    status: '2026-04-10',
+    members: [
+      { userId: ids['pm1'], roles: ['pm'] },
+      { userId: ids['fin1'], roles: ['finance'] },
+      { userId: ids['com1'], roles: ['commerce'] },
+      { userId: ids['exp1'], roles: ['expert'] },
+      { userId: ids['mgr1'], roles: ['management'] },
+    ],
+  });
+  if (created.status !== 201) throw new Error(`project create failed: ${JSON.stringify(created.body)}`);
+  const pid: number = created.body.project.id;
+  const pm = await loggedIn(env, 'pm1');
+  const r = await pm.post(`/api/projects/${pid}/resources`, { name: 'کارشناس ۱', type: 'human', capacityPercent: 100, dailyRate: 1_000_000, userId: ids['exp1'] });
+  if (r.status !== 201) throw new Error(`resource create failed: ${JSON.stringify(r.body)}`);
+  return {
+    env,
+    admin,
+    pm,
+    fin: await loggedIn(env, 'fin1'),
+    com: await loggedIn(env, 'com1'),
+    exp: await loggedIn(env, 'exp1'),
+    mgr: await loggedIn(env, 'mgr1'),
+    pid,
+    ids,
+    expResourceId: r.body.item.id,
+  };
+}
+
+/** درج یک فعالیت با خواندن نسخه‌ی ساختار جاری؛ فهرست کامل فعالیت‌ها و newId را برمی‌گرداند */
+export async function addTask(
+  c: Client,
+  pid: number,
+  spec: { referenceId?: number | null; asChild?: boolean; kind?: 'task' | 'summary' | 'milestone'; name: string },
+): Promise<{ id: number; tasks: any[]; structureVersion: number }> {
+  const proj = await c.get(`/api/projects/${pid}`);
+  const r = await c.post(`/api/projects/${pid}/tasks`, {
+    referenceId: spec.referenceId ?? null,
+    asChild: spec.asChild ?? false,
+    kind: spec.kind ?? 'task',
+    name: spec.name,
+    structureVersion: proj.body.project.structureVersion,
+  });
+  if (r.status !== 200) throw new Error(`addTask failed: ${r.status} ${JSON.stringify(r.body)}`);
+  return { id: r.body.newId, tasks: r.body.tasks, structureVersion: r.body.structureVersion };
+}
+
+export async function getModel(c: Client, pid: number): Promise<any> {
+  const r = await c.get(`/api/projects/${pid}/model`);
+  if (r.status !== 200) throw new Error(`model failed: ${r.status} ${JSON.stringify(r.body)}`);
+  return r.body;
+}
+
+export async function taskOf(c: Client, pid: number, id: number): Promise<any> {
+  return (await getModel(c, pid)).tasks.find((t: { id: number }) => t.id === id);
+}
