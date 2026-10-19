@@ -16,6 +16,8 @@ export interface FieldDef<T extends Versioned> {
   options?: readonly { value: string; label: string }[];
   /** برای select: گزینه‌ی خالی (مقدار null) */
   emptyLabel?: string;
+  /** برای select: مقدار گزینه‌ها عدد است (مثل شناسه‌ی فعالیت) */
+  numeric?: boolean;
   required?: boolean;
   min?: number;
   max?: number;
@@ -110,7 +112,7 @@ function RecordForm<T extends Versioned>({ cfg, row, close }: { cfg: FormSpec<T>
               return <CheckField key={f.key} label={f.label} hint={f.hint} checked={Boolean(v)} onChange={(x) => set(f.key, x)} />;
             case 'select': {
               const opts = [...(f.emptyLabel ? [{ value: '', label: f.emptyLabel }] : []), ...(f.options ?? [])];
-              return <SelectField key={f.key} {...common} value={String(v ?? '')} options={opts} onChange={(x) => set(f.key, x === '' ? null : x)} />;
+              return <SelectField key={f.key} {...common} value={String(v ?? '')} options={opts} onChange={(x) => set(f.key, x === '' ? null : f.numeric ? Number(x) : x)} />;
             }
           }
         })}
@@ -170,7 +172,7 @@ export function RecordTable<T extends RecordBase>({ cfg, rows }: { cfg: RecordCo
       ) : null}
       {rows.length === 0 ? (
         <div className="card">
-          <Empty title={`هنوز ${cfg.noun}ی ثبت نشده است`}>{cfg.emptyHint}</Empty>
+          <Empty title={`هنوز ${cfg.noun} ثبت نشده است`}>{cfg.emptyHint}</Empty>
         </div>
       ) : (
         <div className="tbl-wrap">

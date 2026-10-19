@@ -35,7 +35,7 @@ describe('ریسک، تغییر و تصمیم', () => {
     const { page, errors } = await newSession(browser, stack.baseUrl);
     await loginAs(page, 'admin', `${ADMIN_PASSWORD}-x`);
     await page.goto(`/#/p/${seed.pid}/ri`);
-    await page.getByText('هنوز ریسکی ثبت نشده است').waitFor();
+    await page.getByText('هنوز ریسک ثبت نشده است').waitFor();
     await page.getByTestId('risk-add').click();
     await page.getByTestId('risk-title').fill('تأخیر در تأمین تجهیزات');
     await page.getByLabel(/احتمال/).fill('۴');
@@ -58,7 +58,7 @@ describe('ریسک، تغییر و تصمیم', () => {
     // حذف با تأیید
     await page.getByRole('button', { name: /حذف تأخیر/ }).click();
     await page.getByRole('button', { name: 'حذف', exact: true }).click();
-    await page.getByText('هنوز ریسکی ثبت نشده است').waitFor();
+    await page.getByText('هنوز ریسک ثبت نشده است').waitFor();
     assert.deepEqual(errors, []);
   });
 

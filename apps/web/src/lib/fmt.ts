@@ -13,7 +13,9 @@ const isNum = (n: unknown): n is number => typeof n === 'number' && Number.isFin
 export function faNum(n: number | null | undefined, maxFraction = 0): string {
   if (!isNum(n)) return DASH;
   const s = new Intl.NumberFormat('en-US', { maximumFractionDigits: maxFraction, useGrouping: true }).format(n);
-  return toPersianDigits(s.replace(/,/g, '٬').replace(/\./g, '٫').replace(/-/g, '−'));
+  const body = toPersianDigits(s.replace(/,/g, '٬').replace(/\./g, '٫'));
+  // در متن راست‌به‌چپ علامت منفی بدون نشانگر جهت به انتهای عدد می‌افتد؛ LRM آن را کنار ارقام نگه می‌دارد.
+  return body.startsWith('-') ? `\u200E−${body.slice(1)}` : body;
 }
 
 export function faPct(n: number | null | undefined, maxFraction = 1): string {

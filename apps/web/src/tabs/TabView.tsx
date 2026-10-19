@@ -2,6 +2,7 @@ import type { TabKey } from '../state/route.ts';
 import { PageHead, Alert } from '../ui/controls.tsx';
 import { CharterTab } from './charter/CharterTab.tsx';
 import { DashboardTab } from './dashboard/DashboardTab.tsx';
+import { FinanceTab } from './finance/FinanceTab.tsx';
 import { ChangesTab, DecisionsTab, RisksTab } from './records/RisksTab.tsx';
 import { ResourcesTab } from './resources/ResourcesTab.tsx';
 import { TasksTab } from './tasks/TasksTab.tsx';
@@ -11,6 +12,8 @@ export function TabView({ tab }: { tab: TabKey }) {
   switch (tab) {
     case 'dash':
       return <DashboardTab />;
+    case 'fin':
+      return <FinanceTab />;
     case 'chr':
       return <CharterTab />;
     case 'res':
