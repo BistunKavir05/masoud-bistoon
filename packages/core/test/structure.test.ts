@@ -141,6 +141,13 @@ describe('ویرایش فعالیت', () => {
     // با پایان واقعی صریح، درصد ۱۰۰ می‌شود (رفتار قبلی)
     expect(asOk({ actualFinish: '2026-03-27' }, { ...done, percentComplete: 80, actualFinish: null }).task.percentComplete).toBe(100);
   });
+  it('پایان واقعی پیش از شروع برنامه‌ای: شروع واقعی همان روز پایان می‌شود', () => {
+    const r = asOk({ percentComplete: 100, actualFinish: '2026-03-28' }, base, { ...ctx, plannedStart: '2026-04-10' });
+    expect(r.task).toMatchObject({ actualStart: '2026-03-28', actualFinish: '2026-03-28', percentComplete: 100 });
+    expect(r.notes).toEqual(['شروع واقعی برابر پایان واقعی ثبت شد.']);
+    const normal = asOk({ percentComplete: 100 }, base, { ...ctx, plannedStart: '2026-04-10' });
+    expect(normal.task.actualStart).toBe('2026-04-10');
+  });
   it('مایلستون: مدت صفر و برگشت به فعالیت مدت ۱', () => {
     const ms = asOk({ isMilestone: true }).task;
     expect([ms.kind, ms.duration]).toEqual(['milestone', 0]);

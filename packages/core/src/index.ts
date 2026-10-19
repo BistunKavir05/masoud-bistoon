@@ -18,3 +18,4 @@ export * from './structure.ts';
 export * from './taskPatch.ts';
 export * from './permissions.ts';
 export * from './dto.ts';
+export * from './repair.ts';

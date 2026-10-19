@@ -199,8 +199,10 @@ export function applyTaskPatch(task: Task, patch: TaskPatch, ctx: PatchContext):
     notes.push('پایان واقعی پاک شد، چون درصد پیشرفت کمتر از ۱۰۰ شد.');
   }
   if (has('percentComplete') && next.percentComplete === 100 && !next.actualStart && ctx.plannedStart) {
-    next.actualStart = ctx.plannedStart;
-    notes.push('شروع واقعی برابر شروع برنامه‌ای ثبت شد.');
+    // اگر پایان واقعی پیش از شروع برنامه‌ای باشد، شروع واقعی همان روز پایان می‌شود (وگرنه پایان قبل از شروع می‌افتاد).
+    const early = next.actualFinish !== null && next.actualFinish < ctx.plannedStart;
+    next.actualStart = early ? next.actualFinish : ctx.plannedStart;
+    notes.push(early ? 'شروع واقعی برابر پایان واقعی ثبت شد.' : 'شروع واقعی برابر شروع برنامه‌ای ثبت شد.');
   }
   if (next.actualFinish && next.actualStart && next.actualFinish < next.actualStart) {
     return { ok: false, issues: [{ code: 'FINISH_BEFORE_START', field: 'actualFinish', message: 'پایان واقعی نمی‌تواند قبل از شروع واقعی باشد.' }] };

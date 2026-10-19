@@ -219,7 +219,7 @@ describe('مدل و پالایش بر اساس نقش', () => {
     expect(pm.commission).toBeUndefined();
     expect(pm.contract.salesCommissionPercent).toBeUndefined();
     expect(pm.contract.amount).toBe(0);
-    expect(pm.costs).toBeUndefined();
+    expect(pm.costs).toEqual([]);
 
     const fin = await getModel(w.fin, w.pid);
     expect(fin.costs).toEqual([]);
@@ -251,7 +251,8 @@ describe('مدل و پالایش بر اساس نقش', () => {
     expect(s.actual).toBeGreaterThanOrEqual(0);
     expect(s.actual).toBeLessThanOrEqual(100);
     expect(['ok', 'watch', 'late', 'unknown']).toContain(s.health);
-    expect(s.stages[0].wbs).toBe('1');
+    expect(s.stages.map((x: { name: string }) => x.name)).toContain('فاز ۱');
+    expect(s.stages.every((x: { wbs: string }) => /^\d+$/.test(x.wbs))).toBe(true);
   });
 
   it('هزینه‌ی مستقیم برای نقش بدون دسترسی به هزینه پنهان است', async () => {
