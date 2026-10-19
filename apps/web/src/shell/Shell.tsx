@@ -6,12 +6,14 @@ import { faDate } from '../lib/fmt.ts';
 import { currentTheme, toggleTheme } from '../lib/theme.ts';
 import { closeProject, openProject, reloadProject, useCan, useProjectState } from '../state/project.ts';
 import { navigate, useRoute } from '../state/route.ts';
-import { logout, refreshProjects, sessionStore } from '../state/session.ts';
+import { logout, sessionStore } from '../state/session.ts';
 import { useStore } from '../state/store.ts';
 import { Alert, Badge, Btn, Loading, TextField, useAction } from '../ui/controls.tsx';
 import { DateField } from '../ui/DateField.tsx';
 import { openDialog, toast } from '../ui/dialogs.tsx';
 import { BrandGlyph, Icon } from '../ui/icons.tsx';
+import { NewProjectForm } from '../dataio/NewProject.tsx';
+import { ExportMenu } from '../dataio/ExportMenu.tsx';
 import { TabView } from '../tabs/TabView.tsx';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
 import { Nav, navDef } from './Nav.tsx';
@@ -162,6 +164,7 @@ function Topbar({ projects, pid, onMenu }: { projects: ProjectListItem[]; pid: n
           <Badge key={r}>{ROLE_LABELS[r]}</Badge>
         ))}
       </div>
+      <ExportMenu />
       <Btn kind="ghost" iconOnly icon={theme === 'dark' ? 'sun' : 'moon'} label={theme === 'dark' ? 'حالت روشن' : 'حالت تیره'} onClick={() => setTheme(toggleTheme())} />
       <UserMenu />
     </header>
@@ -231,38 +234,7 @@ function ChangePasswordForm({ close }: { close: () => void }) {
 }
 
 export function newProjectDialog(): void {
-  void openDialog('پروژه‌ی جدید', (close) => <NewProjectForm close={() => close()} />);
-}
-
-function NewProjectForm({ close }: { close: () => void }) {
-  const [name, setName] = useState('');
-  const [start, setStart] = useState<string | null>(null);
-  const [end, setEnd] = useState<string | null>(null);
-  const [unit, setUnit] = useState('ریال');
-  const { busy, run } = useAction();
-  const endErr = start && end && end <= start ? 'تاریخ پایان باید بعد از تاریخ شروع باشد.' : null;
-  const valid = name.trim() !== '' && start !== null && !endErr && unit.trim() !== '';
-  return (
-    <>
-      <div className="body form-grid">
-        <TextField label="نام پروژه" value={name} onChange={setName} maxLength={200} required wide autoFocus testId="np-name" />
-        <DateField label="تاریخ شروع" value={start} onChange={setStart} required testId="np-start" hint="پس از ساخت پروژه قابل تغییر نیست مگر با دسترسی تنظیمات پروژه." />
-        <DateField label="تاریخ پایان قرارداد" value={end} onChange={setEnd} allowEmpty error={endErr} testId="np-end" />
-        <TextField label="واحد پول" value={unit} onChange={setUnit} maxLength={24} hint="فقط برچسب است؛ تبدیل ارز انجام نمی‌شود." />
-      </div>
-      <footer>
-        <Btn kind="primary" busy={busy} disabled={!valid} testId="np-submit" onClick={async () => {
-          const r = await run(() => apiPost<{ project: { id: number } }>('/projects', { name: name.trim(), start, contractEnd: end, finance: { unit: unit.trim() } }), 'پروژه ساخته شد.');
-          if (r) {
-            await refreshProjects();
-            close();
-            navigate({ pid: r.project.id, tab: 'tasks' });
-          }
-        }}>ساخت پروژه</Btn>
-        <Btn onClick={close}>انصراف</Btn>
-      </footer>
-    </>
-  );
+  void openDialog('پروژه‌ی جدید', (close) => <NewProjectForm close={() => close()} />, { wide: true });
 }
 
 function statusDateDialog(): void {

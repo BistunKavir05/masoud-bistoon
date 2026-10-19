@@ -4,6 +4,7 @@ import type { TaskDto } from '@bistoon/core';
 import { apiDelete, apiPatch, apiPost } from '../../api/client.ts';
 import { DASH, faDate, faInt, faNum, faPct } from '../../lib/fmt.ts';
 import { patchTaskLocal, projectStore, reloadProject, useCan, useProjectState } from '../../state/project.ts';
+import { openMspImportDialog } from '../../dataio/ImportMspDialog.tsx';
 import { Alert, Badge, Btn, Empty, PageHead, ProgressBar, SelectField, TextField, useAction } from '../../ui/controls.tsx';
 import { EditCell } from '../../ui/EditCell.tsx';
 import { confirmDialog, openDialog, toast } from '../../ui/dialogs.tsx';
@@ -208,6 +209,11 @@ export function TasksTab() {
             {can('progress.update.own') && !can('progress.update') && !can('schedule.edit') ? <span className="muted small">فقط فعالیت‌هایی که منبع شما به آن‌ها تخصیص دارد قابل ثبت‌اند ({bundle.me.roles.map((r) => ROLE_LABELS[r]).join('، ')}).</span> : null}
           </>
         )}
+        {can('data.import') && !bundle.project.archived ? (
+          <Btn icon="upload" onClick={openMspImportDialog} testId="msp-import">
+            ورود از MS Project
+          </Btn>
+        ) : null}
         <span className="grow" />
         <div style={{ width: 200 }}>
           <TextField label="جست‌وجو" value={query} onChange={setQuery} placeholder="نام، WBS یا کد" testId="task-search" />

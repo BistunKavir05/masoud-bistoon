@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { MAX_LEDGER_ROWS, formatJalali, toCsv, wbsMap } from '@bistoon/core';
+import { MAX_LEDGER_ROWS, costCsvRows, toCsv, wbsMap } from '@bistoon/core';
 import type { CostEntryDto } from '@bistoon/core';
 import { MIME_CSV, MIME_XLSX, downloadFile } from '../../lib/download.ts';
 import { faDate, faInt, faMoney } from '../../lib/fmt.ts';
@@ -11,7 +11,6 @@ import type { RecordConfig } from '../records/RecordTable.tsx';
 import { downloadCostTemplate, startCostImport } from './ImportDialog.tsx';
 
 const PAGE = 200;
-const HEADER = ['تاریخ', 'کد WBS', 'نام فعالیت', 'شرح هزینه', 'شماره سند', 'مبلغ'];
 
 export function Ledger() {
   const ps = useProjectState();
@@ -65,12 +64,7 @@ export function Ledger() {
   const shown = filtered.slice(0, limit);
   const total = filtered.reduce((a, r) => a + r.amount, 0);
 
-  const exportRows = (): (string | number)[][] => [
-    HEADER,
-    ...[...costs]
-      .sort((a, c) => (a.date < c.date ? -1 : a.date > c.date ? 1 : a.id - c.id))
-      .map((r) => [formatJalali(r.date, { persianDigits: false }), r.taskId === null ? '' : (wbs.get(r.taskId) ?? ''), r.taskId === null ? '' : (tasks.find((t) => t.id === r.taskId)?.name ?? ''), r.description, r.document, r.amount]),
-  ];
+  const exportRows = (): (string | number)[][] => costCsvRows(costs, tasks);
 
   return (
     <Card

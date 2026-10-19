@@ -11,7 +11,7 @@ import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
 import { modelFromMsp, parseMspXml, planMspImport, suggestMapping } from '@bistoon/core';
-import type { MspMapping, MspParsed, MspPlan, ProjectModel } from '@bistoon/core';
+import type { MspMapping, MspParsed, MspPlan, MspPreviewDto, ProjectModel } from '@bistoon/core';
 import { actorInfo, writeAudit } from '../audit.ts';
 import type { Db } from '../db.ts';
 import { one, poolDb, withTx } from '../db.ts';
@@ -63,7 +63,7 @@ function planToken(plan: MspPlan): string {
     .slice(0, 32);
 }
 
-function planDto(parsed: MspParsed, model: ProjectModel, plan: MspPlan, suggested: MspMapping) {
+function planDto(parsed: MspParsed, model: ProjectModel, plan: MspPlan, suggested: MspMapping): MspPreviewDto {
   return {
     file: fileDto(parsed),
     project: { start: model.start, taskCount: model.tasks.length },
@@ -82,7 +82,7 @@ function planDto(parsed: MspParsed, model: ProjectModel, plan: MspPlan, suggeste
     },
     effects: plan.effects,
     blockers: plan.blockers,
-    warnings: cap(plan.warnings as Warn[], 100),
+    warnings: cap(plan.warnings, 100),
     token: planToken(plan),
   };
 }

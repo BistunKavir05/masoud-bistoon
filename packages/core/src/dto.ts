@@ -6,8 +6,11 @@ import type { Capability, Role } from './permissions.ts';
 import type { Charter, CommissionPayable, Contract } from './charter.ts';
 import type { IsoDate } from './date.ts';
 import type { EacMethod } from './finance.ts';
+import type { MspCounts, MspWarning } from './msp.ts';
+import type { MspBlocker, MspEffect, MspMapping, MspMappingStats, MspPlan, MspRemoved, MspSchedulePreview } from './mspImport.ts';
 import type { ProjectDocument } from './project.ts';
 import type { ChangeRequest, Decision, Issue, Risk } from './records.ts';
+import type { RepairWarning } from './repair.ts';
 import type { Baseline, CostEntry, Resource, Snapshot, Task, WorkCalendar } from './types.ts';
 
 export interface ProjectDto {
@@ -125,4 +128,79 @@ export interface ModelBundle {
 
 export interface ApiErrorBody {
   error: { code: string; message: string; details?: unknown; requestId?: string };
+}
+
+// ───── ورود فایل MS Project ─────
+
+/** فهرست کوتاه‌شده: تعداد کل و چند مورد اول */
+export interface Capped<T> {
+  count: number;
+  items: T[];
+}
+
+/** پاسخ پیش‌نمایش ورود MSP به پروژه‌ی موجود (POST /projects/:pid/import/msp/preview) */
+export interface MspPreviewDto {
+  file: { name: string; start: IsoDate; status: IsoDate | null; minutesPerDay: number; hoursPerDay: number; counts: MspCounts; calendarFromFile: boolean };
+  project: { start: IsoDate; taskCount: number };
+  mapping: { used: MspMapping; suggested: MspMapping; stats: Record<MspMapping, MspMappingStats> };
+  options: { keepProgress: boolean; keepStart: boolean };
+  result: {
+    rows: number;
+    matched: number;
+    added: number;
+    removed: Capped<MspRemoved>;
+    renamed: Capped<MspPlan['renamed'][number]>;
+    kindChanged: Capped<MspPlan['kindChanged'][number]>;
+    start: IsoDate;
+    replaceBaseline: boolean;
+    schedule: MspSchedulePreview;
+  };
+  effects: MspEffect[];
+  blockers: MspBlocker[];
+  warnings: Capped<MspWarning | RepairWarning>;
+  /** نشانه‌ی تأیید این پیش‌نمایش؛ همراه تأیید نهایی فرستاده می‌شود */
+  token: string;
+}
+
+/** پاسخ پیش‌نمایش پروژه‌ی جدید از فایل MSP (dryRun) */
+export interface MspNewPreviewDto {
+  dryRun: true;
+  name: string;
+  summary: {
+    file: MspPreviewDto['file'];
+    rows: number;
+    baselineItems: number;
+    snapshots: number;
+    schedule: MspSchedulePreview;
+  };
+  warnings: Capped<MspWarning | RepairWarning>;
+}
+
+export interface ImportSummary {
+  tasks: number;
+  resources: number;
+  costs: number;
+  risks: number;
+  snapshots: number;
+  baselineItems: number;
+  issues?: number;
+  changes?: number;
+  decisions?: number;
+  documents?: number;
+  baselineHistory?: number;
+  legacyLog?: number;
+}
+
+/** پاسخ پیش‌نمایش بازیابی پشتیبان/ورود نسخه‌ی قدیمی (dryRun) */
+export interface ImportPreviewDto {
+  dryRun: true;
+  name: string;
+  start: IsoDate;
+  status?: IsoDate;
+  schemaVersion?: number;
+  exportedAt?: string | null;
+  exportedBy?: string | null;
+  summary: ImportSummary;
+  warnings: (RepairWarning | { code: string; message: string })[];
+  legacyUsers?: { id: string; role: string; resourceNames: string; suggestedRole: Role }[];
 }
