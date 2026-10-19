@@ -193,6 +193,11 @@ export function applyTaskPatch(task: Task, patch: TaskPatch, ctx: PatchContext):
     return { ok: false, issues: [{ code: 'MILESTONE_DURATION', field: 'duration', message: 'مدت مایلستون باید صفر باشد.' }] };
   }
   if (has('actualFinish') && next.actualFinish) next.percentComplete = 100;
+  // بازگشایی فعالیت: با کاهش درصد به کمتر از ۱۰۰، پایان واقعی دیگر معنا ندارد (پایگاه‌داده هم این ترکیب را نمی‌پذیرد).
+  if (has('percentComplete') && !has('actualFinish') && next.percentComplete < 100 && next.actualFinish) {
+    next.actualFinish = null;
+    notes.push('پایان واقعی پاک شد، چون درصد پیشرفت کمتر از ۱۰۰ شد.');
+  }
   if (has('percentComplete') && next.percentComplete === 100 && !next.actualStart && ctx.plannedStart) {
     next.actualStart = ctx.plannedStart;
     notes.push('شروع واقعی برابر شروع برنامه‌ای ثبت شد.');

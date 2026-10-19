@@ -30,6 +30,12 @@ describe('ساختار', () => {
   it('شماره‌ی WBS مشتق', () => {
     expect([...wbsMap(sample()).values()]).toEqual(['1', '1.1', '1.2', '1.2.1', '2', '3']);
   });
+  it('شناسه‌ی صریح برای فعالیت جدید پذیرفته می‌شود و شناسه‌ی تکراری رد', () => {
+    const r = ok(insertTask(sample(), { referenceId: 6, asChild: false, kind: 'task', name: 'x', newId: 40 }));
+    expect(r.newId).toBe(40);
+    expect(ids(r.tasks)).toEqual([1, 2, 3, 4, 5, 6, 40]);
+    expect(insertTask(sample(), { referenceId: 6, asChild: false, kind: 'task', name: 'x', newId: 3 }).ok).toBe(false);
+  });
   it('درج هم‌سطح بعد از زیردرخت', () => {
     const r = ok(insertTask(sample(), { referenceId: 1, asChild: false, kind: 'task', name: ' جدید ' }));
     expect(ids(r.tasks)).toEqual([1, 2, 3, 4, 7, 5, 6]);
@@ -126,6 +132,14 @@ describe('ویرایش فعالیت', () => {
     expect(codes({ duration: 0 })).toEqual(['DURATION_TOO_SMALL']);
     expect(codes({ duration: 2.5 })).toEqual(['INVALID_NUMBER']);
     expect(codes({ weight: Number.NaN })).toEqual(['INVALID_NUMBER']);
+  });
+  it('کاهش درصد فعالیت تمام‌شده آن را بازگشایی می‌کند و پایان واقعی را پاک می‌کند', () => {
+    const done = task({ id: 1, duration: 5, percentComplete: 100, actualStart: '2026-03-22', actualFinish: '2026-03-26' });
+    const r = asOk({ percentComplete: 60 }, done);
+    expect(r.task).toMatchObject({ percentComplete: 60, actualStart: '2026-03-22', actualFinish: null });
+    expect(r.notes).toEqual(['پایان واقعی پاک شد، چون درصد پیشرفت کمتر از ۱۰۰ شد.']);
+    // با پایان واقعی صریح، درصد ۱۰۰ می‌شود (رفتار قبلی)
+    expect(asOk({ actualFinish: '2026-03-27' }, { ...done, percentComplete: 80, actualFinish: null }).task.percentComplete).toBe(100);
   });
   it('مایلستون: مدت صفر و برگشت به فعالیت مدت ۱', () => {
     const ms = asOk({ isMilestone: true }).task;

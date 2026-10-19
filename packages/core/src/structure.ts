@@ -108,6 +108,11 @@ export interface InsertSpec {
   asChild: boolean;
   kind: Task['kind'];
   name: string;
+  /**
+   * شناسه‌ی فعالیت جدید. سرور آن را از شمارنده‌ی پروژه می‌گیرد تا شناسه‌ی فعالیت حذف‌شده هرگز دوباره استفاده نشود
+   * (خط مبنا و گزارش تغییرات با شناسه به فعالیت ارجاع می‌دهند). پیش‌فرض: بزرگ‌ترین شناسه + ۱.
+   */
+  newId?: number;
 }
 
 export function insertTask(tasks: readonly Task[], spec: InsertSpec): StructureResult<{ newId: number; convertedId: number | null }> {
@@ -127,7 +132,8 @@ export function insertTask(tasks: readonly Task[], spec: InsertSpec): StructureR
       convertedId = ref.id;
     }
   }
-  const id = nextTaskId(list);
+  const id = spec.newId ?? nextTaskId(list);
+  if (list.some((t) => t.id === id)) return fail('NOTHING_TO_DO', 'شناسه‌ی فعالیت جدید تکراری است.');
   list.splice(idx, 0, newTask(id, level, spec.kind, spec.name.trim() || 'فعالیت جدید'));
   return { ok: true, tasks: list, newId: id, convertedId };
 }

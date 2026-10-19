@@ -105,7 +105,7 @@ describe('پروژه و دسترسی', () => {
     expect(stale.status).toBe(409);
     expect(stale.body.error.code).toBe('VERSION_CONFLICT');
     expect(stale.body.error.details.current.name).toBe('نام ۱');
-    expect((await pm.patch(`/api/projects/${pid}`, { start: '1405-01-01', version: cur.version + 1 })).status).toBe(400);
+    expect((await pm.patch(`/api/projects/${pid}`, { start: '2026-02-30', version: cur.version + 1 })).status).toBe(400);
     expect((await pm.patch(`/api/projects/${pid}`, { hacker: true, version: cur.version + 1 })).status).toBe(400);
   });
 

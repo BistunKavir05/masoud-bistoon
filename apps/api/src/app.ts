@@ -9,7 +9,9 @@ import { makeErrorHandler, notFoundHandler } from './errors.ts';
 import { FailureLimiter, authenticate, csrfGuard, originGuard, passwordChangeGuard, requestContext } from './middleware.ts';
 import type { Logger } from './middleware.ts';
 import { authRouters } from './routes/auth.ts';
+import { modelRouter } from './routes/model.ts';
 import { projectsRouter } from './routes/projects.ts';
+import { tasksRouter } from './routes/tasks.ts';
 import { usersRouter } from './routes/users.ts';
 
 export interface AppDeps {
@@ -51,6 +53,8 @@ export function createApp({ pool, config, log = stdoutLogger }: AppDeps): Expres
   api.use('/auth', auth.session);
   api.use(usersRouter(pool));
   api.use(projectsRouter(pool));
+  api.use('/projects/:pid', modelRouter(pool));
+  api.use('/projects/:pid', tasksRouter(pool));
 
   app.use('/api', api);
   app.use('/api', notFoundHandler);

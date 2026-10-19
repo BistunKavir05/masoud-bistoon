@@ -216,9 +216,12 @@ CREATE TABLE baselines (
   label       text        NOT NULL DEFAULT '',
   status_date date        NOT NULL,
   is_current  boolean     NOT NULL DEFAULT false,
+  -- تاریخی که با ثبت خط مبنای جدید، این خط مبنا بایگانی شد (برای خط مبنای جاری خالی است)
+  archived_on date,
   created_by  bigint REFERENCES users (id),
   created_at  timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (project_id, id)
+  PRIMARY KEY (project_id, id),
+  CONSTRAINT baselines_archived_not_current CHECK (NOT is_current OR archived_on IS NULL)
 );
 CREATE UNIQUE INDEX baselines_one_current_uq ON baselines (project_id) WHERE is_current;
 
