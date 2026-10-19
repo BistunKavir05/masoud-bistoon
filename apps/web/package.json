@@ -1,0 +1,25 @@
+{
+  "name": "@bistoon/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "رابط کاربری بیستون (React، راست‌به‌چپ، بدون CDN)",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bistoon/core": "*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

@@ -14,6 +14,10 @@ export interface Charter {
   stakeholders: string;
 }
 
+export function emptyCharter(): Charter {
+  return { client: '', location: '', subject: '', product: '', projectManager: '', salesOwner: '', goals: '', scope: '', assumptions: '', stakeholders: '' };
+}
+
 export type SalesApproval = 'pending' | 'approved' | 'rejected';
 export type RetentionMode = 'fixed' | 'percent';
 
