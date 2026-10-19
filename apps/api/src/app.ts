@@ -8,9 +8,18 @@ import { poolDb } from './db.ts';
 import { makeErrorHandler, notFoundHandler } from './errors.ts';
 import { FailureLimiter, authenticate, csrfGuard, originGuard, passwordChangeGuard, requestContext } from './middleware.ts';
 import type { Logger } from './middleware.ts';
+import { auditRouter } from './routes/audit.ts';
 import { authRouters } from './routes/auth.ts';
+import { baselinesRouter } from './routes/baselines.ts';
+import { calendarRouter } from './routes/calendar.ts';
+import { charterContractRouter } from './routes/charterContract.ts';
+import { chatRouter } from './routes/chat.ts';
+import { costsRouter } from './routes/costs.ts';
+import { documentsRouter } from './routes/documents.ts';
 import { modelRouter } from './routes/model.ts';
 import { projectsRouter } from './routes/projects.ts';
+import { recordsRouter } from './routes/records.ts';
+import { resourcesRouter } from './routes/resources.ts';
 import { tasksRouter } from './routes/tasks.ts';
 import { usersRouter } from './routes/users.ts';
 
@@ -55,6 +64,15 @@ export function createApp({ pool, config, log = stdoutLogger }: AppDeps): Expres
   api.use(projectsRouter(pool));
   api.use('/projects/:pid', modelRouter(pool));
   api.use('/projects/:pid', tasksRouter(pool));
+  api.use('/projects/:pid', resourcesRouter(pool));
+  api.use('/projects/:pid', calendarRouter(pool));
+  api.use('/projects/:pid', baselinesRouter(pool));
+  api.use('/projects/:pid', costsRouter(pool));
+  api.use('/projects/:pid', charterContractRouter(pool));
+  api.use('/projects/:pid', recordsRouter(pool));
+  api.use('/projects/:pid', documentsRouter(pool));
+  api.use('/projects/:pid', chatRouter(pool));
+  api.use('/projects/:pid', auditRouter(pool));
 
   app.use('/api', api);
   app.use('/api', notFoundHandler);
