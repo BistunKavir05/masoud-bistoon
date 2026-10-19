@@ -4,12 +4,23 @@
   "private": true,
   "description": "سامانه‌ی مدیریت و کنترل پروژه‌ی بیستون",
   "type": "module",
-  "workspaces": ["packages/*", "apps/*"],
-  "engines": { "node": ">=22.12" },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "lint": "echo \"lint: not configured yet\""
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0",
+    "playwright": "^1.56.0",
+    "@types/node": "^22.0.0"
   }
 }

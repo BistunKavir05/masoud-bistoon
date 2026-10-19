@@ -104,6 +104,7 @@ export interface CommissionPayable extends Commission {
  */
 export function commissionPayable(c: Contract): CommissionPayable {
   const base = computeCommission(c);
+  if (!(c.amount > 0)) return { ...base, collectedRatio: 0, payableSales: 0, payableRetention: 0, payable: 0, pending: base.total };
   const ret = retentionAmount(c);
   const collected = Math.max(0, c.collectedTotal);
   const ratio = c.amount > 0 ? Math.min(1, collected / c.amount) : 0;

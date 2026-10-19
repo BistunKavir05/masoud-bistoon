@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  core:
+    name: هسته (typecheck + آزمون واحد)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: نصب وابستگی‌ها
+        run: npm install --no-audit --no-fund 2>&1 | tee install.log
+      - name: typecheck
+        run: npm run typecheck 2>&1 | tee typecheck.log
+      - name: آزمون واحد
+        run: npm test 2>&1 | tee test.log
+      - name: گزارش
+        if: always()
+        run: |
+          mkdir -p ci-out/core
+          cp -f install.log typecheck.log test.log package-lock.json ci-out/core/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core
+          path: ci-out/core
+
+  oracle:
+    name: آزمون تفاضلی با برنامه‌ی مرجع
+    runs-on: ubuntu-latest
+    needs: core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: مقایسه
+        run: |
+          mkdir -p ci-out/oracle
+          node tools/oracle/run.ts --count 250 --seed 1 --maxTasks 40 --out ci-out/oracle/diffs.json 2>&1 | tee ci-out/oracle/run.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oracle
+          path: ci-out/oracle
+
+  publish-logs:
+    name: انتشار گزارش‌ها در شاخه‌ی ci-logs
+    runs-on: ubuntu-latest
+    needs: [core, oracle]
+    if: always() && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ci-logs
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          path: incoming
+        continue-on-error: true
+      - name: commit
+        run: |
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          if [ -z "$(git rev-parse --verify -q HEAD)" ] || [ "$(git rev-parse --abbrev-ref HEAD)" != "ci-logs" ]; then
+            git checkout --orphan ci-logs
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+          rm -rf latest
+          mkdir -p latest "runs/${GITHUB_RUN_ID}"
+          cp -r incoming/* latest/ 2>/dev/null || true
+          cp -r incoming/* "runs/${GITHUB_RUN_ID}/" 2>/dev/null || true
+          printf '%s\n%s\n%s\n' "sha=${GITHUB_SHA}" "ref=${GITHUB_REF}" "run=${GITHUB_RUN_ID}" > latest/meta.txt
+          rm -rf incoming
+          git add -A
+          git commit -m "logs for ${GITHUB_SHA}" || true
+          git push origin ci-logs --force

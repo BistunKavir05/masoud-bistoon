@@ -69,29 +69,45 @@ interface Conflict {
   items: ConflictItem[];
 }
 
-/** اولین (زودترین روز) بیش‌تخصیص که در `skip` نیست */
-function findConflict(tasks: readonly Task[], schedule: Schedule, cap: (id: number) => number, skip: ReadonlySet<string>): Conflict | null {
+/** همه‌ی (منبع، روز)هایی که بار آن‌ها از ظرفیت بیشتر است */
+function overbooked(tasks: readonly Task[], schedule: Schedule, cap: (id: number) => number): Conflict[] {
   const map = new Map<string, { resourceId: number; index: number; items: ConflictItem[] }>();
   for (const t of tasks) {
     const s = schedule.byId.get(t.id);
     if (!s || t.kind !== 'task' || !s.duration) continue;
-    for (const a of t.assignments) {
+    // چند تخصیص یک فعالیت به یک منبع یک ردیف حساب می‌شود (وگرنه فعالیت با خودش تداخل می‌کند)
+    const perResource = new Map<number, number>();
+    for (const a of t.assignments) perResource.set(a.resourceId, (perResource.get(a.resourceId) ?? 0) + a.units / 100);
+    for (const [resourceId, units] of perResource) {
       for (let i = s.earlyStart; i < s.earlyFinish; i += 1) {
-        const key = `${a.resourceId}\u0001${i}`;
+        const key = `${resourceId}\u0001${i}`;
         let e = map.get(key);
-        if (!e) map.set(key, (e = { resourceId: a.resourceId, index: i, items: [] }));
-        e.items.push({ task: t, units: a.units / 100 });
+        if (!e) map.set(key, (e = { resourceId, index: i, items: [] }));
+        e.items.push({ task: t, units });
       }
     }
   }
-  let best: Conflict | null = null;
+  const out: Conflict[] = [];
   for (const [key, e] of map) {
-    if (skip.has(key)) continue;
     const c = cap(e.resourceId);
-    const total = e.items.reduce((acc, x) => acc + x.units, 0);
-    if (total > c + EPS && (!best || e.index < best.index)) best = { key, resourceId: e.resourceId, index: e.index, capacity: c, items: e.items };
+    if (e.items.reduce((acc, x) => acc + x.units, 0) > c + EPS) out.push({ key, resourceId: e.resourceId, index: e.index, capacity: c, items: e.items });
+  }
+  return out;
+}
+
+/** زودترین روزِ بیش‌تخصیص (و در تساوی کوچک‌ترین شناسه‌ی منبع) که در `skip` نیست */
+function firstConflict(tasks: readonly Task[], schedule: Schedule, cap: (id: number) => number, skip: ReadonlySet<string>): Conflict | null {
+  let best: Conflict | null = null;
+  for (const c of overbooked(tasks, schedule, cap)) {
+    if (skip.has(c.key)) continue;
+    if (!best || c.index < best.index || (c.index === best.index && c.resourceId < best.resourceId)) best = c;
   }
   return best;
+}
+
+/** تعداد (منبع، روز)هایی که بیش‌تخصیص دارند */
+export function countOverbooked(tasks: readonly Task[], schedule: Schedule, resources: readonly Resource[]): number {
+  return overbooked(tasks, schedule, capacityOf(resources)).length;
 }
 
 export interface LevelingSuggestion {
@@ -109,16 +125,18 @@ export interface LevelingResult {
   suggestions: LevelingSuggestion[];
   finishBefore: number;
   finishAfter: number;
-  /** تعداد روز-منبعی که با جابه‌جایی قابل رفع نبود */
+  /** تعداد (منبع، روز)هایی که پس از تسطیح هنوز بیش‌تخصیص دارند */
   unresolved: number;
 }
 
-const MAX_ITERATIONS = 600;
-
 /**
- * تسطیح پیشنهادی: تا وقتی بیش‌تخصیص هست، از میان فعالیت‌های جابه‌جاشدنی (غیر شروع‌شده و غیر مایلستون)
- * فعالیتی را که بیشترین شناوری را دارد یک روز کاری عقب می‌اندازد. نتیجه فقط پیشنهاد است و چیزی اعمال نمی‌شود.
- * اگر وابستگی دایره‌ای باشد `null` برمی‌گردد.
+ * تسطیح پیشنهادی (زمان‌بندی سری با قاعده‌ی اولویت):
+ * در اولین روزِ بیش‌تخصیص، از میان فعالیت‌های جابه‌جاشدنی همان روز فعالیتی که بیشترین شناوری دارد (در تساوی، دیرتر شروع‌شده، و
+ * سپس ردیف پایین‌تر) تا نزدیک‌ترین زمانی که یکی از فعالیت‌های هم‌روز تمام می‌شود عقب می‌رود. فعالیت شروع‌شده و مایلستون هرگز جابه‌جا نمی‌شود.
+ * هر جابه‌جایی فقط شروع یک فعالیت را به جلو می‌برد و زمان‌ها یکنوا هستند، پس نوسان (ping-pong) رخ نمی‌دهد؛ سقف تکرار هم برای اطمینان هست.
+ * تا آن زمان نمی‌توان فعالیت را جا داد، چون بار منابع پیش از اولین پایان کم نمی‌شود، پس پرش نزدیک‌ترین پایان بهینه‌ی موضعی است.
+ *
+ * خروجی فقط «پیشنهاد» است. اگر وابستگی دایره‌ای باشد `null` برمی‌گردد.
  */
 export function levelResources(input: ScheduleInput, resources: readonly Resource[]): LevelingResult | null {
   const cap = capacityOf(resources);
@@ -130,26 +148,34 @@ export function levelResources(input: ScheduleInput, resources: readonly Resourc
   const skip = new Set<string>();
   const moved = new Map<number, IsoDate>();
   const fixed = (t: Task): boolean => Boolean(t.actualStart || t.actualFinish) || t.kind === 'milestone';
+  const rowOf = new Map(input.tasks.map((t, i) => [t.id, i]));
+  const maxIterations = Math.max(1000, input.tasks.length * 25);
 
-  let it = 0;
-  let c: Conflict | null;
-  while (it < MAX_ITERATIONS && sched.ok && (c = findConflict(work, sched, cap, skip))) {
-    it += 1;
-    const fx = c.items.filter((x) => fixed(x.task)).reduce((a, x) => a + x.units, 0);
-    const mov = c.items.filter((x) => !fixed(x.task));
-    if (!mov.length || fx > c.capacity + EPS || (mov.length === c.items.length && mov.length === 1 && (mov[0] as ConflictItem).units > c.capacity + EPS)) {
+  for (let it = 0; it < maxIterations; it += 1) {
+    const cur: Schedule = sched;
+    const c = firstConflict(work, cur, cap, skip);
+    if (!c) break;
+    const at = (x: ConflictItem): Schedule['tasks'][number] => cur.byId.get(x.task.id) as Schedule['tasks'][number];
+    // فعالیتی که خودش به‌تنهایی از ظرفیت بیشتر است در هیچ روزی جا نمی‌شود؛ جابه‌جایی دیگران چیزی را حل نمی‌کند.
+    const immovable = (x: ConflictItem): boolean => fixed(x.task) || x.units > c.capacity + EPS;
+    const movable = c.items.filter((x) => !immovable(x));
+    const fixedUnits = c.items.reduce((a, x) => a + (immovable(x) ? x.units : 0), 0);
+    if (c.items.length < 2 || !movable.length || fixedUnits > c.capacity + EPS) {
       skip.add(c.key);
       continue;
     }
-    const cur = sched;
-    const sc = (x: ConflictItem): { tf: number; es: number } => {
-      const s = cur.byId.get(x.task.id) as Schedule['tasks'][number];
-      return { tf: s.totalFloat, es: s.earlyStart };
-    };
-    mov.sort((a, b) => sc(b).tf - sc(a).tf || sc(b).es - sc(a).es);
-    const pick = (mov[0] as ConflictItem).task;
-    const es = (cur.byId.get(pick.id) as Schedule['tasks'][number]).earlyStart;
-    const next = cur.axis.dateAt(es + 1);
+    movable.sort(
+      (a, b) =>
+        at(b).totalFloat - at(a).totalFloat || at(b).earlyStart - at(a).earlyStart || (rowOf.get(b.task.id) as number) - (rowOf.get(a.task.id) as number),
+    );
+    const pick = (movable[0] as ConflictItem).task;
+    let target = Infinity;
+    for (const x of c.items) {
+      if (x.task.id === pick.id) continue;
+      const ef = at(x).earlyFinish;
+      if (ef > c.index && ef < target) target = ef;
+    }
+    const next = Number.isFinite(target) ? cur.axis.dateAt(target) : null;
     if (!next) {
       skip.add(c.key);
       continue;
@@ -160,7 +186,7 @@ export function levelResources(input: ScheduleInput, resources: readonly Resourc
     if (!r.ok) return null;
     sched = r;
   }
-  if (!sched.ok) return null;
+
   const final = sched;
   const suggestions: LevelingSuggestion[] = [];
   for (const t of work) {
@@ -178,5 +204,5 @@ export function levelResources(input: ScheduleInput, resources: readonly Resourc
       delayDays: (s.startDate ? final.axis.onOrAfter(s.startDate) : idxFrom) - idxFrom,
     });
   }
-  return { suggestions, finishBefore: f0, finishAfter: final.projectFinish, unresolved: skip.size };
+  return { suggestions, finishBefore: f0, finishAfter: final.projectFinish, unresolved: overbooked(work, final, cap).length };
 }

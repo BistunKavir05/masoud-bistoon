@@ -6,12 +6,19 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { analyzeProject, importLegacyProject, levelResources, computeUtilization } from '../../packages/core/src/index.ts';
+import { analyzeProject, computeSchedule, computeUtilization, countOverbooked, importLegacyProject, levelResources } from '../../packages/core/src/index.ts';
 import type { Analysis, ProjectModel } from '../../packages/core/src/index.ts';
 import { genLegacyProject, type GenOptions } from './gen.ts';
 
-const PLAYWRIGHT = process.env.PLAYWRIGHT_PATH ?? '/opt/npm-tools/node_modules/playwright/index.mjs';
-const { chromium } = (await import(PLAYWRIGHT)) as typeof import('playwright');
+// در CI بسته‌ی playwright نصب است؛ در محیط‌های بدون registry مسیر نصب سراسری با PLAYWRIGHT_PATH داده می‌شود.
+async function loadPlaywright(): Promise<typeof import('playwright')> {
+  try {
+    return await import('playwright');
+  } catch {
+    return (await import(process.env.PLAYWRIGHT_PATH ?? '/opt/npm-tools/node_modules/playwright/index.mjs')) as typeof import('playwright');
+  }
+}
+const { chromium } = await loadPlaywright();
 
 const arg = (name: string, def: string): string => {
   const i = process.argv.indexOf(`--${name}`);
@@ -45,7 +52,17 @@ const PAGE_FN = `(raw) => {
   res.sc = { n: sc.n, s0: sc.s0, pl: sc.pl, ac: sc.ac.map((a) => [a[0], a[1]]), fc: sc.fc, pS: sc.pS, end: sc.end };
   if (r.PF < wd.length - 5) {
     res.util = util();
-    try { res.level = level(); } catch (e) { res.levelErr = String(e); }
+    const countAll = () => { const sk = new Set(); let n = 0, c; while ((c = conflicts(sk)) && n < 5000) { sk.add(c.n + '\\u0001' + c.i); n += 1; } return n; };
+    res.overbookedBefore = countAll();
+    try {
+      res.level = level();
+      const keep = S.tasks.map((t) => t.snet);
+      res.level.sug.forEach((s) => { const t = S.tasks.find((x) => x.id == s.id); if (t) t.snet = s.snet; });
+      calc();
+      res.levelOldOverbooked = countAll();
+      S.tasks.forEach((t, i) => { t.snet = keep[i]; });
+      calc();
+    } catch (e) { res.levelErr = String(e); }
   }
   return res;
 }`;
@@ -144,22 +161,42 @@ function compare(seed: number, old: Json, model: ProjectModel, an: Analysis, dif
     for (const [k, v] of oflat) d(`util[${k}]`, v, flat.get(k) ?? null);
   }
   if (old.level) {
-    const lv = levelResources({ start: model.start, status: model.status, calendar: model.calendar, tasks: model.tasks }, model.resources);
-    if (!lv) diffs.push({ seed, where: 'level', old: old.level, neu: null });
+    // الگوریتم تسطیح عمداً عوض شده (docs/divergences.md D-002)؛ به‌جای برابری، ناوردایی‌ها بررسی می‌شوند.
+    const input = { start: model.start, status: model.status, calendar: model.calendar, tasks: model.tasks };
+    const lv = levelResources(input, model.resources);
+    if (!lv) {
+      diffs.push({ seed, where: 'level.null', old: old.level, neu: null });
+      return;
+    }
+    const again = levelResources(input, model.resources);
+    d('level.deterministic', JSON.stringify(lv), JSON.stringify(again));
+    const applied = model.tasks.map((t) => {
+      const sg = lv.suggestions.find((q) => q.taskId === t.id);
+      return sg ? { ...t, startNoEarlierThan: sg.startNoEarlierThan } : t;
+    });
+    const after = computeSchedule({ ...input, tasks: applied });
+    if (!after.ok) diffs.push({ seed, where: 'level.cycle-after', old: null, neu: null });
     else {
-      d('level.f0', old.level.f0, lv.finishBefore);
-      d('level.f1', old.level.f1, lv.finishAfter);
-      d('level.unres', old.level.unres, lv.unresolved);
-      d('level.sug.len', old.level.sug.length, lv.suggestions.length);
-      old.level.sug.forEach((o: Json, i: number) => {
-        const q = lv.suggestions[i];
-        if (!q) return;
-        d(`level.sug[${i}].id`, o.id, q.taskId);
-        d(`level.sug[${i}].from`, o.from, q.from);
-        d(`level.sug[${i}].to`, o.to, q.to);
-        d(`level.sug[${i}].snet`, o.snet, q.startNoEarlierThan);
-        d(`level.sug[${i}].d`, o.d, q.delayDays);
-      });
+      const left = countOverbooked(applied, after, model.resources);
+      d('level.unresolved-matches-count', left, lv.unresolved);
+      d('level.finish-consistent', after.projectFinish, lv.finishAfter);
+      if (lv.finishAfter < lv.finishBefore) diffs.push({ seed, where: 'level.finish-decreased', old: lv.finishBefore, neu: lv.finishAfter });
+      for (const sg of lv.suggestions) {
+        const t = model.tasks.find((x) => x.id === sg.taskId);
+        if (t && (t.actualStart || t.actualFinish || t.kind === 'milestone')) diffs.push({ seed, where: 'level.moved-fixed-task', old: null, neu: sg.taskId });
+        if (sg.delayDays <= 0) diffs.push({ seed, where: 'level.non-positive-delay', old: null, neu: sg });
+      }
+      levelStats.projects += 1;
+      levelStats.oldLeft += old.levelOldOverbooked ?? 0;
+      levelStats.newLeft += left;
+      levelStats.before += old.overbookedBefore ?? 0;
+      levelStats.oldFinish += old.level.f1 - old.level.f0;
+      levelStats.newFinish += lv.finishAfter - lv.finishBefore;
+      if ((old.levelOldOverbooked ?? 0) > 0 && old.level.unres === 0) levelStats.oldSilentFail += 1;
+      if (left > (old.levelOldOverbooked ?? 0)) {
+        levelStats.newWorse += 1;
+        worse.push({ seed, before: old.overbookedBefore, oldLeft: old.levelOldOverbooked, newLeft: left, oldFinish: old.level.f1 - old.level.f0, newFinish: lv.finishAfter - lv.finishBefore });
+      }
     }
   }
 }
@@ -173,6 +210,8 @@ await page.goto(`file://${HTML}`);
 await page.waitForTimeout(500);
 
 const diffs: Diff[] = [];
+const worse: Record<string, unknown>[] = [];
+const levelStats = { projects: 0, before: 0, oldLeft: 0, newLeft: 0, oldFinish: 0, newFinish: 0, oldSilentFail: 0, newWorse: 0 };
 let cycles = 0;
 let compared = 0;
 let leveled = 0;
@@ -207,6 +246,8 @@ console.log(JSON.stringify({ count: COUNT, seed0: SEED0, compared, cycles, level
 const bySeed = new Map<number, Diff[]>();
 for (const x of diffs) bySeed.set(x.seed, [...(bySeed.get(x.seed) ?? []), x]);
 console.log(`projects with diffs: ${bySeed.size}`);
+console.log('leveling:', JSON.stringify(levelStats));
+if (worse.length) console.log('new worse than old:', JSON.stringify(worse));
 let shown = 0;
 for (const [seed, xs] of bySeed) {
   if (shown++ >= 5) break;
