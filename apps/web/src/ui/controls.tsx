@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { toPersianDigits } from '@bistoon/core';
 import { ApiError, errorMessage } from '../api/client.ts';
 import { reloadProject } from '../state/project.ts';
-import { DASH, faNum, parseNumber } from '../lib/fmt.ts';
+import { DASH, faNum, parseNumber, parseTime } from '../lib/fmt.ts';
 import { toast } from './dialogs.tsx';
 import { Icon } from './icons.tsx';
 import type { IconName } from './icons.tsx';
@@ -185,6 +185,50 @@ export function NumberField(p: FieldShell & { value: number | null; onChange: (v
   return (
     <Shell id={id} f={f}>
       <input id={id} className="in num" inputMode="decimal" dir="ltr" value={text} disabled={p.disabled} aria-invalid={f.error ? true : undefined} aria-describedby={describedBy(id, f)} onChange={(e) => commit(e.target.value)} onBlur={() => local === null && setText(show(last.current))} data-testid={p.testId} />
+    </Shell>
+  );
+}
+
+/**
+ * ورودی ساعت `HH:mm` مستقل از زبان مرورگر (کنترل بومی `type=time` در برخی زبان‌ها ۱۲ساعته و AM/PM است).
+ * ارقام فارسی را می‌پذیرد؛ مقدار نامعتبر پیام می‌دهد و onChange صدا زده نمی‌شود.
+ */
+export function TimeField(p: FieldShell & { value: string; onChange: (v: string) => void; disabled?: boolean; testId?: string; ariaLabel?: string; compact?: boolean }) {
+  const id = useId();
+  const [text, setText] = useState(toPersianDigits(p.value));
+  const [local, setLocal] = useState<string | null>(null);
+  const last = useRef(p.value);
+  useEffect(() => {
+    if (p.value !== last.current) {
+      last.current = p.value;
+      setText(toPersianDigits(p.value));
+      setLocal(null);
+    }
+  }, [p.value]);
+  const commit = (t: string): void => {
+    setText(t);
+    const v = parseTime(t);
+    if (v === null) return setLocal('ساعت را به قالب ۰۷:۳۰ وارد کنید.');
+    setLocal(null);
+    last.current = v;
+    p.onChange(v);
+  };
+  const f = { ...p, error: p.error ?? local };
+  const input = (
+    <input id={id} className="in num" inputMode="numeric" dir="ltr" placeholder="۰۷:۳۰" maxLength={5} value={text} disabled={p.disabled} aria-label={p.ariaLabel} aria-invalid={f.error ? true : undefined} aria-describedby={describedBy(id, f)} onChange={(e) => commit(e.target.value)} onBlur={() => local === null && setText(toPersianDigits(last.current))} data-testid={p.testId} style={p.compact ? { width: 96 } : undefined} />
+  );
+  return p.compact ? (
+    <div className={`time-compact${local ? ' invalid' : ''}`}>
+      {input}
+      {local ? (
+        <span className="err" role="alert">
+          {local}
+        </span>
+      ) : null}
+    </div>
+  ) : (
+    <Shell id={id} f={f}>
+      {input}
     </Shell>
   );
 }

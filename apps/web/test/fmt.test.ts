@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DASH, dateToInput, faDate, faMoney, faNum, faPct, faSigned, faSignedPct, isSafeUrl, parseDateInput, parseNumber } from '../src/lib/fmt.ts';
+import { DASH, dateToInput, faDate, faMoney, faNum, faPct, faSigned, faSignedPct, isSafeUrl, parseDateInput, parseNumber, parseTime } from '../src/lib/fmt.ts';
 
 describe('نمایش اعداد و تاریخ', () => {
   it('ارقام فارسی و جداکننده‌ی هزارگان', () => {
@@ -39,6 +39,17 @@ describe('نمایش اعداد و تاریخ', () => {
 });
 
 describe('ورودی کاربر', () => {
+  it('ساعت HH:mm با ارقام فارسی و جداکننده‌های گوناگون؛ نامعتبر null', () => {
+    expect(parseTime('07:30')).toBe('07:30');
+    expect(parseTime('۷:۳۰')).toBe('07:30');
+    expect(parseTime('۱۵.۰۰')).toBe('15:00');
+    expect(parseTime(' ۲۳:۵۹ ')).toBe('23:59');
+    expect(parseTime('24:00')).toBeNull();
+    expect(parseTime('12:60')).toBeNull();
+    expect(parseTime('7')).toBeNull();
+    expect(parseTime('')).toBeNull();
+    expect(parseTime('ab:cd')).toBeNull();
+  });
   it('عدد با ارقام فارسی و عربی و جداکننده', () => {
     expect(parseNumber('۱٬۲۳۴')).toBe(1234);
     expect(parseNumber('١٢٣')).toBe(123);

@@ -8,6 +8,7 @@ export * from './baseline.ts';
 export * from './progress.ts';
 export * from './snapshots.ts';
 export * from './baselineImpact.ts';
+export * from './calendarImpact.ts';
 export * from './scurve.ts';
 export * from './finance.ts';
 export * from './resources.ts';

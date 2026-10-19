@@ -63,6 +63,16 @@ export function parseNumber(text: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** ساعت `HH:mm` از متن کاربر (ارقام فارسی/عربی؛ جداکننده‌ی «:» یا «.»). نامعتبر → null */
+export function parseTime(text: string): string | null {
+  const m = /^(\d{1,2})[:.](\d{2})$/.exec(normalizeDigits(text).trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const mi = Number(m[2]);
+  if (h > 23 || mi > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+}
+
 /**
  * تاریخ از متن کاربر. شمسی (۱۳۰۰ تا ۱۶۹۹) یا میلادی ISO (YYYY-MM-DD).
  * undefined = نامعتبر، null = خالی، رشته = ISO میلادی

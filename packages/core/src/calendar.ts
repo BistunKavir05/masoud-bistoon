@@ -14,6 +14,26 @@ export function defaultCalendar(): WorkCalendar {
   return { days, holidays: [] };
 }
 
+export interface CalendarTemplate {
+  key: string;
+  label: string;
+  days: WorkDay[];
+}
+
+/** هفته‌ی کاری با فهرست اندیس روزهای کاری (۰ یکشنبه … ۶ شنبه) و ساعت یکسان */
+function weekOf(working: readonly number[], from: string, to: string): WorkDay[] {
+  return [0, 1, 2, 3, 4, 5, 6].map((i) => ({ working: working.includes(i), from, to }));
+}
+
+/** الگوهای آماده‌ی هفته‌ی کاری؛ فقط مقدار اولیه‌ی فرم‌اند و پس از اعمال قابل ویرایش‌اند. */
+export const CALENDAR_TEMPLATES: readonly CalendarTemplate[] = [
+  { key: 'default', label: 'پیش‌فرض: شنبه تا پنجشنبه (پنجشنبه تا ۱۴:۰۰)، جمعه تعطیل', days: defaultCalendar().days },
+  { key: 'sat-wed', label: 'شنبه تا چهارشنبه، پنجشنبه و جمعه تعطیل (۰۸:۰۰ تا ۱۶:۰۰)', days: weekOf([6, 0, 1, 2, 3], '08:00', '16:00') },
+  { key: 'sun-thu', label: 'یکشنبه تا پنجشنبه، جمعه و شنبه تعطیل (۰۸:۰۰ تا ۱۶:۰۰)', days: weekOf([0, 1, 2, 3, 4], '08:00', '16:00') },
+  { key: 'mon-fri', label: 'دوشنبه تا جمعه، شنبه و یکشنبه تعطیل (۰۹:۰۰ تا ۱۷:۰۰)', days: weekOf([1, 2, 3, 4, 5], '09:00', '17:00') },
+  { key: 'seven', label: 'هر هفت روز هفته کاری (۰۸:۰۰ تا ۱۶:۰۰)', days: weekOf([0, 1, 2, 3, 4, 5, 6], '08:00', '16:00') },
+];
+
 export interface CalendarIssue {
   code: 'NO_WORKING_WEEKDAY' | 'INVALID_HOLIDAY' | 'INVALID_TIME' | 'WRONG_DAY_COUNT';
   message: string;
