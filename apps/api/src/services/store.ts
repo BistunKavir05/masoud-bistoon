@@ -331,6 +331,24 @@ export async function loadSnapshots(db: Db, pid: number): Promise<Snapshot[]> {
   });
 }
 
+export async function insertSnapshots(tx: Db, pid: number, list: readonly Snapshot[], userId: number): Promise<void> {
+  for (const s of list) {
+    await tx.query(
+      `INSERT INTO snapshots (project_id, snapshot_date, actual_percent, planned_percent, estimated, actual_cost, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [pid, s.date, s.actual, s.planned ?? null, s.estimated, s.actualCost ?? null, userId],
+    );
+    const entries = Object.entries(s.tasks ?? {});
+    if (entries.length) {
+      await tx.query(
+        `INSERT INTO snapshot_tasks (project_id, snapshot_date, task_id, percent)
+         SELECT $1, $2::date, t, p FROM unnest($3::int[], $4::numeric[]) AS x(t, p)`,
+        [pid, s.date, entries.map(([k]) => Number(k)), entries.map(([, v]) => v)],
+      );
+    }
+  }
+}
+
 // ───────────────────────── هزینه‌ها ─────────────────────────
 
 export async function loadCosts(db: Db, pid: number): Promise<CostEntryDto[]> {

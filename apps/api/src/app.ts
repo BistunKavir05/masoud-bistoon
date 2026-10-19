@@ -16,6 +16,7 @@ import { charterContractRouter } from './routes/charterContract.ts';
 import { chatRouter } from './routes/chat.ts';
 import { costsRouter } from './routes/costs.ts';
 import { documentsRouter } from './routes/documents.ts';
+import { importExportRouter } from './routes/importExport.ts';
 import { modelRouter } from './routes/model.ts';
 import { projectsRouter } from './routes/projects.ts';
 import { recordsRouter } from './routes/records.ts';
@@ -62,6 +63,7 @@ export function createApp({ pool, config, log = stdoutLogger }: AppDeps): Expres
   api.use('/auth', auth.session);
   api.use(usersRouter(pool));
   api.use(projectsRouter(pool));
+  api.use(importExportRouter(pool));
   api.use('/projects/:pid', modelRouter(pool));
   api.use('/projects/:pid', tasksRouter(pool));
   api.use('/projects/:pid', resourcesRouter(pool));

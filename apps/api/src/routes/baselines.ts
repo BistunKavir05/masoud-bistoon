@@ -3,15 +3,14 @@ import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
 import { buildBaseline, estimateSnapshots, plannedCost, recordSnapshot } from '@bistoon/core';
-import type { Analysis, Snapshot } from '@bistoon/core';
+import type { Analysis } from '@bistoon/core';
 import { actorInfo, writeAudit } from '../audit.ts';
-import type { Db } from '../db.ts';
 import { one, withTx } from '../db.ts';
 import { badRequest, notFound } from '../errors.ts';
 import { actorOf, projectOf } from '../http/types.ts';
 import { projectAccess, requireCap } from '../middleware.ts';
 import { isoDate, text } from '../schemas.ts';
-import { loadBaselines, loadFullModel, loadSnapshots, lockProject } from '../services/store.ts';
+import { insertSnapshots, loadBaselines, loadFullModel, loadSnapshots, lockProject } from '../services/store.ts';
 import type { FullModel } from '../services/store.ts';
 import { computeAnalysis } from '../services/summary.ts';
 
@@ -21,24 +20,6 @@ function needAnalysis(full: FullModel): Analysis {
   const a = computeAnalysis(full);
   if ('error' in a) throw badRequest(a.error, undefined, 'SCHEDULE_INVALID');
   return a;
-}
-
-async function insertSnapshots(tx: Db, pid: number, list: readonly Snapshot[], userId: number): Promise<void> {
-  for (const s of list) {
-    await tx.query(
-      `INSERT INTO snapshots (project_id, snapshot_date, actual_percent, planned_percent, estimated, actual_cost, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [pid, s.date, s.actual, s.planned ?? null, s.estimated, s.actualCost ?? null, userId],
-    );
-    const entries = Object.entries(s.tasks ?? {});
-    if (entries.length) {
-      await tx.query(
-        `INSERT INTO snapshot_tasks (project_id, snapshot_date, task_id, percent)
-         SELECT $1, $2::date, t, p FROM unnest($3::int[], $4::numeric[]) AS x(t, p)`,
-        [pid, s.date, entries.map(([k]) => Number(k)), entries.map(([, v]) => v)],
-      );
-    }
-  }
 }
 
 export function baselinesRouter(pool: Pool): Router {
