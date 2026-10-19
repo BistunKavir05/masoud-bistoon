@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { formatDependencies, parseDependencies, wbsMap } from '@bistoon/core';
+import { formatDependencies, parseDependencies, recurrenceText, wbsMap } from '@bistoon/core';
 import type { Assignment, Dependency, DependencyType, DirectCostLine, TaskDto } from '@bistoon/core';
 import { apiPatch } from '../../api/client.ts';
 import { faNum } from '../../lib/fmt.ts';
@@ -7,6 +7,7 @@ import { patchTaskLocal, reloadProject, useCan, useProjectState } from '../../st
 import { Alert, Btn, CheckField, NumberField, SelectField, TextField, useAction } from '../../ui/controls.tsx';
 import { DateField } from '../../ui/DateField.tsx';
 import { openDialog, toast } from '../../ui/dialogs.tsx';
+import { openRecurrenceDialog } from './RecurrenceDialog.tsx';
 
 const DEP_TYPES: { value: DependencyType; label: string }[] = [
   { value: 'FS', label: 'پایان به شروع (FS)' },
@@ -119,6 +120,24 @@ function TaskForm({ taskId, mode, close }: { taskId: number; mode: Mode; close: 
     <>
       <div className="body stack">
         {isSummary && full ? <Alert kind="info">این فعالیت «گروه» است؛ مدت، پیشرفت و تاریخ‌هایش از زیرمجموعه‌ها محاسبه می‌شود و فقط نام آن قابل ویرایش است.</Alert> : null}
+        {isSummary && full && original.recurrence ? (
+          <Alert kind="info">
+            <div className="row wrap">
+              <span style={{ flex: '1 1 260px' }}>گروه تکرارشونده ({recurrenceText(original.recurrence)}). رخدادها را از روی الگو بسازید یا عوض کنید؛ پیشرفت و پیش‌نیاز رخدادهای موجود می‌ماند.</span>
+              <Btn
+                size="sm"
+                icon="refresh"
+                onClick={() => {
+                  close();
+                  void openRecurrenceDialog({ mode: 'edit', groupId: taskId });
+                }}
+                testId="td-edit-recurrence"
+              >
+                ویرایش الگوی تکرار
+              </Btn>
+            </div>
+          </Alert>
+        ) : null}
         <div className="form-grid">
           <TextField label="نام فعالیت" value={name} onChange={setName} maxLength={300} required disabled={!full} wide error={name.trim() === '' ? 'نام نمی‌تواند خالی باشد.' : null} testId="td-name" />
           {full && !isSummary ? <CheckField label="مایلستون (مدت صفر)" checked={milestone} onChange={setMilestone} /> : null}

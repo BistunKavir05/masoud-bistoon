@@ -131,7 +131,15 @@ table { border-collapse: collapse; }
 .btn.menu-btn { display: none; }
 
 @media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  /* نوار بالا در عرض کم: موارد ثانویه (نقش‌ها، برچسب تاریخ وضعیت) پنهان می‌شوند تا صفحه از عرض خود بیرون نزند */
+  .topbar { gap: 5px; padding-inline: 6px; min-width: 0; }
+  .topbar .topbar-extra { display: none; }
+  .topbar .brand-mark { display: none; }
+  .topbar .topbar-wide-only { display: none; }
+  .topbar .user-name { display: none; }
+  .topbar .btn { flex: none; }
+  .topbar #project-select { min-width: 0 !important; max-width: 24vw !important; }
   .nav { position: fixed; inset-block: var(--top-h) 0; inset-inline-start: 0; width: min(280px, 86vw); transform: translateX(100%); transition: transform 0.18s; z-index: 30; box-shadow: var(--shadow-pop); }
   :root[dir='rtl'] .nav { transform: translateX(100%); }
   .nav.open { transform: none !important; }

@@ -8,6 +8,8 @@ describe('برچسب‌های گزارش تغییرات', () => {
     expect(actionLabel('task.update', 'task')).toBe('ویرایش فعالیت');
     expect(actionLabel('risk.create', 'risk')).toBe('ایجاد ریسک');
     expect(actionLabel('decision.delete')).toBe('حذف تصمیم');
+    expect(actionLabel('task.recurring.create')).toBe('ساخت فعالیت تکرارشونده');
+    expect(actionLabel('task.recurring.update')).toBe('ویرایش الگوی فعالیت تکرارشونده');
   });
   it('ناشناخته بدون تغییر نمایش داده می‌شود', () => {
     expect(actionLabel('something.else')).toBe('something.else');

@@ -7,6 +7,30 @@ const num = z.number().finite();
 const str = (max = 20000) => z.string().max(max);
 const idNum = z.number().int().min(1).max(2_000_000_000);
 
+/** شکل الگوی تکرار؛ بازه‌ها را `validateRecurrence` در هسته می‌سنجد (در ورود پشتیبان، الگوی ناسالم با هشدار حذف می‌شود) */
+export const recurrencePatternSchema = z
+  .object({
+    name: str(300),
+    duration: num,
+    type: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+    every: num,
+    weekdays: z.array(num).max(7),
+    monthMode: z.enum(['day', 'ordinal']),
+    monthDay: num,
+    monthOrdinal: num,
+    monthWeekday: num,
+    yearMonth: num,
+    yearDay: num,
+    start: isoDate,
+    endMode: z.enum(['count', 'date']),
+    count: num,
+    endDate: isoDateOrNull,
+    resource: z.object({ resourceId: idNum, units: num }).nullable(),
+    weighted: z.boolean(),
+    levelOfEffort: z.boolean(),
+  })
+  .strict();
+
 const dependency = z.object({ predecessorId: idNum, type: z.enum(['FS', 'SS', 'FF', 'SF']), lag: z.number().int() });
 const task = z.object({
   id: idNum,
@@ -28,6 +52,7 @@ const task = z.object({
   directCosts: z.array(z.object({ name: str(80), amount: num })).max(500),
   legacyActualCost: num.nullable(),
   costTracked: z.boolean(),
+  recurrence: recurrencePatternSchema.nullable().default(null),
 });
 
 const baselineItems = z.record(

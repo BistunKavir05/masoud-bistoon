@@ -115,6 +115,7 @@ function baseTask(m: MspTask, id: number, mapId: (uid: number) => number): Task 
     directCosts: m.fixedCost > 0 ? [{ name: MSP_FIXED_COST_NAME, amount: m.fixedCost }] : [],
     legacyActualCost: null,
     costTracked: false,
+    recurrence: null,
   };
 }
 
@@ -363,6 +364,8 @@ export function planMspImport(model: ProjectModel, parsed: MspParsed, options: M
     const losing = kindChanged.filter((k) => k.to === 'summary').map((k) => model.tasks.find((t) => t.id === k.id) as Task).filter((t) => t.assignments.length > 0 || t.directCosts.length > 0);
     add('فعالیت‌ها', `نوع ${fa(kindChanged.length)} فعالیت عوض می‌شود (فعالیت/خلاصه/مایلستون).${losing.length ? ` ${fa(losing.length)} مورد که خلاصه می‌شود تخصیص یا هزینه‌ی مستقیم دارد و آن‌ها حذف می‌شود.` : ''}`, 'warn');
   }
+  const recurring = model.tasks.filter((t) => t.recurrence !== null);
+  if (recurring.length > 0) add('فعالیت‌ها', `الگوی تکرار ${fa(recurring.length)} گروه تکرارشونده (${recurring.slice(0, 3).map((t) => `«${t.name}»`).join('، ')}${recurring.length > 3 ? '…' : ''}) پاک می‌شود؛ رخدادهایشان فعالیت عادی می‌مانند.`, 'warn');
   if (start !== model.start) add('شروع پروژه', `شروع پروژه از ${formatJalali(model.start)} به ${formatJalali(start)} تغییر می‌کند.`, 'warn');
   else add('شروع پروژه', 'شروع پروژه تغییر نمی‌کند.');
   if (keepStart && parsed.start !== model.start) add('شروع پروژه', `شروع فایل ${formatJalali(parsed.start)} است ولی طبق انتخاب شما نادیده گرفته می‌شود؛ تاریخ‌های محاسبه‌شده ممکن است با فایل فرق کنند.`, 'warn');

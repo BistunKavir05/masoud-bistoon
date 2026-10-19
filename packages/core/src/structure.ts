@@ -90,6 +90,7 @@ export function newTask(id: number, level: number, kind: Task['kind'], name: str
     directCosts: [],
     legacyActualCost: null,
     costTracked: false,
+    recurrence: null,
   };
 }
 

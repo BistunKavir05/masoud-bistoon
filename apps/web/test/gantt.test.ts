@@ -25,6 +25,7 @@ const mk = (p: Partial<Task> & { id: number }): TaskDto => {
     directCosts: [],
     legacyActualCost: null,
     costTracked: false,
+    recurrence: null,
     version: 1,
     ...p,
   };

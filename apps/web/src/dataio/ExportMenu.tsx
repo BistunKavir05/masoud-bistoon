@@ -110,9 +110,9 @@ export function ExportMenu() {
 
   return (
     <div ref={wrap} style={{ position: 'relative' }} className="no-print">
-      <button ref={trigger} type="button" className="btn" aria-haspopup="menu" aria-expanded={open} disabled={busy} onClick={() => setOpen((o) => !o)} data-testid="export-menu">
+      <button ref={trigger} type="button" className="btn" aria-label="خروجی" aria-haspopup="menu" aria-expanded={open} disabled={busy} onClick={() => setOpen((o) => !o)} data-testid="export-menu">
         {busy ? <span className="spin" aria-hidden="true" /> : <Icon name="download" />}
-        خروجی
+        <span className="user-name">خروجی</span>
       </button>
       {open && (
         <div className="popover menu-pop" role="menu" aria-label="خروجی" style={{ insetBlockStart: 'calc(100% + 4px)', insetInlineEnd: 0 }}>

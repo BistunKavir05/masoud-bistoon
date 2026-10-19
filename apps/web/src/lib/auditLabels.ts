@@ -43,6 +43,8 @@ const ACTION_LABELS: Record<string, string> = {
   'task.move': 'جابه‌جایی فعالیت',
   'task.indent': 'زیرمجموعه‌کردن فعالیت',
   'task.outdent': 'بیرون‌آوردن از زیرمجموعه',
+  'task.recurring.create': 'ساخت فعالیت تکرارشونده',
+  'task.recurring.update': 'ویرایش الگوی فعالیت تکرارشونده',
   'member.set': 'تنظیم نقش عضو',
   'project.export': 'خروجی گرفتن از پروژه',
   'project.import': 'ورود پروژه',
@@ -110,6 +112,16 @@ const FIELD_LABELS: Record<string, string> = {
   displayName: 'نام نمایشی',
   isActive: 'فعال',
   isSystemAdmin: 'مدیر سیستم',
+  recurrence: 'الگوی تکرار',
+  summary: 'خلاصه‌ی الگو',
+  occurrences: 'تعداد رخدادها',
+  first: 'نخستین رخداد',
+  last: 'آخرین رخداد',
+  added: 'رخدادهای افزوده',
+  removed: 'رخدادهای حذف‌شده',
+  kept: 'رخدادهای حفظ‌شده',
+  referenceId: 'فعالیت مرجع محل درج',
+  asChild: 'به‌عنوان زیرمجموعه',
 };
 
 export const fieldLabel = (f: string): string => FIELD_LABELS[f] ?? f;

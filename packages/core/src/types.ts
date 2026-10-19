@@ -3,6 +3,7 @@
  * هرگز در مدل ذخیره‌شونده نمی‌آیند و هر بار از ورودی‌ها محاسبه می‌شوند.
  */
 import type { IsoDate } from './date.ts';
+import type { RecurrencePattern } from './recurrence.ts';
 
 export type DependencyType = 'FS' | 'SS' | 'FF' | 'SF';
 
@@ -58,6 +59,8 @@ export interface Task {
   legacyActualCost: number | null;
   /** فعالیتی که حتی با هزینه‌ی صفر در جدول هزینه‌ها نمایش داده می‌شود */
   costTracked: boolean;
+  /** فقط روی فعالیت خلاصه‌ی «گروه تکرارشونده»؛ رخدادها فعالیت‌های عادی‌اند. */
+  recurrence: RecurrencePattern | null;
 }
 
 export type ResourceType = 'human' | 'equipment' | 'financial' | 'other';

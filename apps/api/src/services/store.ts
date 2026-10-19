@@ -81,6 +81,7 @@ interface TaskRow {
   level_of_effort: boolean;
   legacy_actual_cost: number | null;
   cost_tracked: boolean;
+  recurrence: Task['recurrence'];
   version: number;
 }
 
@@ -88,7 +89,7 @@ export async function loadTasks(db: Db, pid: number): Promise<TaskDto[]> {
   const rows = await many<TaskRow>(
     db,
     `SELECT id, name, level, kind, duration, weight, percent_complete, actual_start, actual_finish, work,
-            start_no_earlier_than, start_no_earlier_source, deadline, level_of_effort, legacy_actual_cost, cost_tracked, version
+            start_no_earlier_than, start_no_earlier_source, deadline, level_of_effort, legacy_actual_cost, cost_tracked, recurrence, version
        FROM tasks WHERE project_id = $1 ORDER BY position`,
     [pid],
   );
@@ -139,6 +140,7 @@ export async function loadTasks(db: Db, pid: number): Promise<TaskDto[]> {
     directCosts: (cm.get(r.id) ?? []).map((c) => ({ name: c.name, amount: c.amount })),
     legacyActualCost: r.legacy_actual_cost,
     costTracked: r.cost_tracked,
+    recurrence: r.recurrence,
     version: r.version,
   }));
 }
@@ -162,6 +164,7 @@ function taskSignature(t: Task, position: number): string {
     t.levelOfEffort,
     t.legacyActualCost,
     t.costTracked,
+    t.kind === 'summary' ? t.recurrence : null,
     [...t.dependencies].sort((a, b) => a.predecessorId - b.predecessorId).map((d) => [d.predecessorId, d.type, d.lag]),
     [...t.assignments].sort((a, b) => a.resourceId - b.resourceId).map((a) => [a.resourceId, a.units]),
     t.directCosts.map((c) => [c.name, c.amount]),
@@ -218,12 +221,13 @@ export async function saveTasks(db: Db, pid: number, before: readonly Task[], af
       isSummary ? null : t.legacyActualCost,
       t.costTracked,
       userId,
+      isSummary && t.recurrence ? JSON.stringify(t.recurrence) : null,
     ];
     if (!prev) {
       await db.query(
         `INSERT INTO tasks (project_id, id, position, name, level, kind, duration, weight, percent_complete, actual_start, actual_finish, work,
-                            start_no_earlier_than, start_no_earlier_source, deadline, level_of_effort, legacy_actual_cost, cost_tracked, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+                            start_no_earlier_than, start_no_earlier_source, deadline, level_of_effort, legacy_actual_cost, cost_tracked, updated_by, recurrence)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb)`,
         params,
       );
       inserted.push(t.id);
@@ -232,7 +236,7 @@ export async function saveTasks(db: Db, pid: number, before: readonly Task[], af
       await db.query(
         `UPDATE tasks SET position = $3, name = $4, level = $5, kind = $6, duration = $7, weight = $8, percent_complete = $9,
                 actual_start = $10, actual_finish = $11, work = $12, start_no_earlier_than = $13, start_no_earlier_source = $14,
-                deadline = $15, level_of_effort = $16, legacy_actual_cost = $17, cost_tracked = $18,
+                deadline = $15, level_of_effort = $16, legacy_actual_cost = $17, cost_tracked = $18, recurrence = $20::jsonb,
                 version = version + 1, updated_at = now(), updated_by = $19
           WHERE project_id = $1 AND id = $2`,
         params,

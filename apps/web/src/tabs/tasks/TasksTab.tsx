@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ROLE_LABELS } from '@bistoon/core';
+import { ROLE_LABELS, recurrenceText } from '@bistoon/core';
 import type { TaskDto } from '@bistoon/core';
 import { apiDelete, apiPatch, apiPost } from '../../api/client.ts';
 import { DASH, faDate, faInt, faNum, faPct } from '../../lib/fmt.ts';
@@ -9,6 +9,7 @@ import { Alert, Badge, Btn, Empty, PageHead, ProgressBar, SelectField, TextField
 import { EditCell } from '../../ui/EditCell.tsx';
 import { confirmDialog, openDialog, toast } from '../../ui/dialogs.tsx';
 import { Icon } from '../../ui/icons.tsx';
+import { openRecurrenceDialog } from './RecurrenceDialog.tsx';
 import { openTaskDialog } from './TaskDialog.tsx';
 import { FILTER_LABELS, buildRows, visibleRows } from './rows.ts';
 import type { RowFilter, TaskRow } from './rows.ts';
@@ -67,6 +68,11 @@ export function TasksTab() {
     const lastRoot = [...tasks].reverse().find((t) => t.level === 1)?.id ?? null;
     const r = await structural('', { referenceId: sel ? sel.t.id : lastRoot, asChild: sel ? res.asChild : false, kind: res.kind, name: res.name }, 'فعالیت اضافه شد.');
     if (r?.newId) setSelected(r.newId);
+  };
+
+  const addRecurring = async (): Promise<void> => {
+    const id = await openRecurrenceDialog({ mode: 'create', selectedId: sel ? sel.t.id : null, selectedName: sel?.t.name ?? '' });
+    if (id) setSelected(id);
   };
 
   const deleteTask = async (): Promise<void> => {
@@ -179,6 +185,12 @@ export function TasksTab() {
           <>
             <Btn kind="primary" icon="plus" onClick={addTask} testId="add-task" disabled={busy}>
               افزودن
+            </Btn>
+            <Btn icon="refresh" onClick={() => void addRecurring()} testId="add-recurring" disabled={busy}>
+              فعالیت تکرارشونده
+            </Btn>
+            <Btn icon="edit" onClick={() => { if (sel?.t.recurrence) void openRecurrenceDialog({ mode: 'edit', groupId: sel.t.id }); }} testId="edit-recurring" disabled={!sel?.t.recurrence || busy} title="با انتخاب یک گروه تکرارشونده فعال می‌شود">
+              ویرایش الگوی تکرار
             </Btn>
             <span className="seg" role="group" aria-label="جابه‌جایی">
               <button type="button" disabled={!sel || busy} aria-label="انتقال به بالا" title="انتقال به بالا" onClick={() => void structural(`/${sel!.t.id}/move`, { dir: -1 })} data-testid="move-up">
@@ -305,6 +317,11 @@ function Row({ r, selected, collapsed, onToggle, onSelect, canEdit, canProgress,
           )}
           <EditCell kind="text" value={t.name} display={t.name} editable={canEdit} maxLength={300} label={`نام فعالیت ${t.name}`} onCommit={(v) => patchField(t, { name: String(v) })} />
           {r.afterBaseline ? <Badge kind="warn">پس از خط مبنا</Badge> : null}
+          {t.recurrence ? (
+            <span title={`الگوی تکرار: ${recurrenceText(t.recurrence)}`} data-testid={`recurring-badge-${t.id}`}>
+              <Badge kind="brand">تکرار</Badge>
+            </span>
+          ) : null}
         </span>
       </td>
       <td>

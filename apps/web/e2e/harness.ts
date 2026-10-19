@@ -5,6 +5,8 @@
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { createServer } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -57,46 +59,77 @@ function run(cmd: string, args: string[], env: NodeJS.ProcessEnv, cwd: string): 
   });
 }
 
+/** پورت آزاد را از سیستم‌عامل می‌گیرد (پورت تصادفی ثابت ممکن است با فرایند دیگری تداخل کند) */
+function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const s = createServer();
+    s.once('error', reject);
+    s.listen(0, '127.0.0.1', () => {
+      const port = (s.address() as AddressInfo).port;
+      s.close(() => resolve(port));
+    });
+  });
+}
+
 export async function startStack(): Promise<Stack> {
   const adminUrl = process.env['TEST_DATABASE_URL'] ?? 'postgres://postgres@127.0.0.1:55432/postgres';
   const dbName = `bistoon_e2e_${randomBytes(5).toString('hex')}`;
   const admin = new pg.Client({ connectionString: adminUrl });
   await admin.connect();
   await admin.query(`CREATE DATABASE ${dbName}`);
+  const dropDb = async (): Promise<void> => {
+    await admin.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`).catch(() => undefined);
+    await admin.end().catch(() => undefined);
+  };
   const url = new URL(adminUrl);
   url.pathname = `/${dbName}`;
-  const port = 3700 + Math.floor(Math.random() * 600);
+  const port = await freePort();
   const env: NodeJS.ProcessEnv = { ...process.env, DATABASE_URL: url.toString(), PORT: String(port), HOST: '127.0.0.1', WEB_DIST: join(here, '..', 'dist'), LOG_REQUESTS: 'false', ADMIN_PASSWORD };
   const apiDir = join(repoRoot, 'apps', 'api');
-  await run('node', ['src/cli.ts', 'create-admin', '--username', 'admin', '--name', 'مدیر سیستم', '--password', ADMIN_PASSWORD], env, apiDir);
-  const server: ChildProcess = spawn('node', ['src/server.ts'], { env, cwd: apiDir, stdio: ['ignore', 'inherit', 'inherit'] });
-  const baseUrl = `http://127.0.0.1:${port}`;
-  let up = false;
-  for (let i = 0; i < 80 && !up; i++) {
-    await sleep(250);
-    try {
-      up = (await fetch(`${baseUrl}/api/health`)).ok;
-    } catch {
-      /* هنوز بالا نیامده */
-    }
-  }
-  if (!up) throw new Error('سرور API بالا نیامد');
-  const adminApi = new ApiSession(baseUrl);
-  await adminApi.login('admin', ADMIN_PASSWORD);
-  // ادمین باید اول گذرواژه را عوض کند؛ در آزمون‌ها همان مسیر رابط را جدا امتحان می‌کنیم، پس این‌جا مستقیم عوض می‌کنیم.
-  await adminApi.call('POST', '/auth/change-password', { currentPassword: ADMIN_PASSWORD, newPassword: `${ADMIN_PASSWORD}-x` });
-  return {
-    baseUrl,
-    admin: adminApi,
-    async createUser(username, displayName) {
-      const r = await adminApi.call<{ user: { id: number } }>('POST', '/users', { username, displayName, password: USER_PASSWORD, mustChangePassword: false }, 201);
-      return r.user.id;
-    },
-    async stop() {
-      server.kill('SIGTERM');
-      await sleep(300);
-      await admin.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
-      await admin.end();
-    },
+  let server: ChildProcess | null = null;
+  // هر شکستی در راه‌اندازی باید سرور و پایگاه‌داده را جمع کند؛ وگرنه فرایند آزمون برای همیشه باز می‌ماند (قفل‌شدن CI)
+  const cleanup = async (): Promise<void> => {
+    if (server && server.exitCode === null && server.signalCode === null) server.kill('SIGKILL');
+    await dropDb();
   };
+  try {
+    await run('node', ['src/cli.ts', 'create-admin', '--username', 'admin', '--name', 'مدیر سیستم', '--password', ADMIN_PASSWORD], env, apiDir);
+    const child: ChildProcess = spawn('node', ['src/server.ts'], { env, cwd: apiDir, stdio: ['ignore', 'inherit', 'inherit'] });
+    server = child;
+    const baseUrl = `http://127.0.0.1:${port}`;
+    let up = false;
+    for (let i = 0; i < 120 && !up && child.exitCode === null && child.signalCode === null; i++) {
+      await sleep(250);
+      try {
+        up = (await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(2000) })).ok;
+      } catch {
+        /* هنوز بالا نیامده */
+      }
+    }
+    if (!up) throw new Error(child.exitCode !== null || child.signalCode !== null ? `سرور API بالا نیامد (خارج شد؛ کد ${child.exitCode ?? child.signalCode}، پورت ${port})` : `سرور API روی پورت ${port} پاسخ نداد`);
+    const adminApi = new ApiSession(baseUrl);
+    await adminApi.login('admin', ADMIN_PASSWORD);
+    // ادمین باید اول گذرواژه را عوض کند؛ در آزمون‌ها همان مسیر رابط را جدا امتحان می‌کنیم، پس این‌جا مستقیم عوض می‌کنیم.
+    await adminApi.call('POST', '/auth/change-password', { currentPassword: ADMIN_PASSWORD, newPassword: `${ADMIN_PASSWORD}-x` });
+    return {
+      baseUrl,
+      admin: adminApi,
+      async createUser(username, displayName) {
+        const r = await adminApi.call<{ user: { id: number } }>('POST', '/users', { username, displayName, password: USER_PASSWORD, mustChangePassword: false }, 201);
+        return r.user.id;
+      },
+      async stop() {
+        if (child.exitCode === null && child.signalCode === null) {
+          const exited = new Promise<void>((resolve) => child.once('exit', () => resolve()));
+          child.kill('SIGTERM');
+          // خاموشی مؤدبانه تا ۵ ثانیه؛ بعد اجباری
+          await Promise.race([exited, sleep(5000, undefined, { ref: false }).then(() => child.kill('SIGKILL'))]);
+        }
+        await dropDb();
+      },
+    };
+  } catch (e) {
+    await cleanup();
+    throw e;
+  }
 }

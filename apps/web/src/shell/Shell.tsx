@@ -146,19 +146,19 @@ function Topbar({ projects, pid, onMenu }: { projects: ProjectListItem[]; pid: n
             </option>
           ))}
         </select>
-        {user.isSystemAdmin ? <Btn size="sm" icon="plus" onClick={newProjectDialog} testId="new-project">پروژه‌ی جدید</Btn> : null}
+        {user.isSystemAdmin ? <span className="topbar-wide-only"><Btn size="sm" icon="plus" onClick={newProjectDialog} testId="new-project">پروژه‌ی جدید</Btn></span> : null}
       </div>
       {bundle ? (
         <div className="row gap-s">
-          <span className="muted small">تاریخ وضعیت:</span>
+          <span className="muted small topbar-extra">تاریخ وضعیت:</span>
           <strong className="num" data-testid="status-date">{faDate(bundle.project.status)}</strong>
-          {can('project.settings') && !bundle.project.archived ? <Btn size="sm" kind="ghost" iconOnly icon="edit" label="تغییر تاریخ وضعیت" onClick={() => statusDateDialog()} /> : null}
+          {can('project.settings') && !bundle.project.archived ? <span className="topbar-wide-only"><Btn size="sm" kind="ghost" iconOnly icon="edit" label="تغییر تاریخ وضعیت" onClick={() => statusDateDialog()} /></span> : null}
         </div>
       ) : null}
       {bundle?.project.archived ? <Badge kind="warn">بایگانی‌شده؛ فقط خواندنی</Badge> : null}
       {ps.refreshing ? <span className="spin" role="status" aria-label="در حال به‌روزرسانی" /> : null}
       <span className="grow" />
-      <div className="row gap-s no-print">
+      <div className="row gap-s no-print topbar-extra">
         {user.isSystemAdmin ? <Badge kind="brand">ادمین سیستم</Badge> : null}
         {roles.map((r) => (
           <Badge key={r}>{ROLE_LABELS[r]}</Badge>
@@ -185,9 +185,9 @@ function UserMenu() {
   }, [open]);
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button type="button" className="btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} data-testid="user-menu">
+      <button type="button" className="btn" aria-label={`منوی کاربر: ${user.displayName}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} data-testid="user-menu">
         <Icon name="user" />
-        {user.displayName}
+        <span className="user-name">{user.displayName}</span>
       </button>
       {open && (
         <div className="popover" role="menu" style={{ insetBlockStart: 'calc(100% + 4px)', insetInlineEnd: 0, minWidth: 180 }}>

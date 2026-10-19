@@ -11,7 +11,12 @@ const applied = await migrate(pool, config.migrationsDir ?? defaultMigrationsDir
 if (applied.length > 0) stdoutLogger({ level: 'info', msg: 'migrations applied', applied });
 
 const app = createApp({ pool, config });
-const server = app.listen(config.port, config.host, () => {
+// در Express 5 خطای شنیدن (مثلاً EADDRINUSE) به callback داده می‌شود؛ نباید «listening» چاپ شود و فرایند بی‌صدا زنده بماند.
+const server = app.listen(config.port, config.host, (err?: Error) => {
+  if (err) {
+    stdoutLogger({ level: 'error', msg: 'listen failed', host: config.host, port: config.port, error: String(err) });
+    process.exit(1);
+  }
   stdoutLogger({ level: 'info', msg: 'listening', host: config.host, port: config.port });
 });
 

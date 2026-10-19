@@ -24,6 +24,7 @@ export function task(p: Partial<Task> & { id: number }): Task {
     directCosts: [],
     legacyActualCost: null,
     costTracked: false,
+    recurrence: null,
     ...p,
   };
 }

@@ -2,8 +2,8 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
-import { applyTaskPatch, computeSchedule, deleteSubtree, guardCycle, indentTask, insertTask, moveTask, outdentTask } from '@bistoon/core';
-import type { Capability, StructureResult, Task, TaskDto, TaskPatch } from '@bistoon/core';
+import { applyTaskPatch, computeSchedule, createRecurrence, deleteSubtree, guardCycle, indentTask, insertTask, moveTask, outdentTask, recurrenceText, updateRecurrence } from '@bistoon/core';
+import type { Capability, RecurrencePattern, RecurrenceResult, StructureResult, Task, TaskDto, TaskPatch, WorkCalendar } from '@bistoon/core';
 import { actorInfo, writeAudit } from '../audit.ts';
 import type { AuditEntry } from '../audit.ts';
 import type { Db } from '../db.ts';
@@ -12,6 +12,7 @@ import { badRequest, conflict, forbidden, notFound, versionConflict } from '../e
 import { actorOf, intParam, projectOf } from '../http/types.ts';
 import { projectAccess, requireCap } from '../middleware.ts';
 import { isoDateOrNull, posInt, text, version } from '../schemas.ts';
+import { recurrencePatternSchema } from '../services/modelSchema.ts';
 import { loadCalendar, loadTasks, lockProject, saveTasks } from '../services/store.ts';
 
 const depSchema = z.object({ predecessorId: posInt, type: z.enum(['FS', 'SS', 'FF', 'SF']), lag: z.number().int().min(-10000).max(10000) });
@@ -49,6 +50,8 @@ const insertBody = z.object({
   structureVersion: version,
 });
 const moveBody = z.object({ dir: z.union([z.literal(-1), z.literal(1)]), structureVersion: version });
+const recurringCreateBody = z.object({ pattern: recurrencePatternSchema, referenceId: posInt.nullable(), asChild: z.boolean(), structureVersion: version });
+const recurringUpdateBody = z.object({ pattern: recurrencePatternSchema, structureVersion: version });
 
 const PROGRESS_FIELDS = new Set<keyof TaskPatch>(['percentComplete', 'actualStart', 'actualFinish']);
 
@@ -65,6 +68,29 @@ function assertMayPatch(caps: readonly Capability[], ownResourceIds: readonly nu
   throw forbidden('نقش شما اجازه‌ی ویرایش این بخش از فعالیت را ندارد.', 'FORBIDDEN', { fields });
 }
 
+/** نخستین شناسه‌ی آزاد فعالیت (بدون مصرف شمارنده)؛ پس از ساخت رخدادها شمارنده با `bump_seq` جلو می‌رود */
+async function firstFreeTaskId(db: Db, pid: number, tasks: readonly Task[]): Promise<number> {
+  const c = await one<{ n: number }>(db, "SELECT next_value AS n FROM project_counters WHERE project_id = $1 AND kind = 'task'", [pid]);
+  return tasks.reduce((m, t) => Math.max(m, t.id + 1), Math.max(c?.n ?? 1, 1));
+}
+
+async function assertKnownResource(db: Db, pid: number, p: RecurrencePattern): Promise<void> {
+  if (!p.resource) return;
+  const known = await one<{ id: number }>(db, 'SELECT id FROM resources WHERE project_id = $1 AND id = $2', [pid, p.resource.resourceId]);
+  if (!known) throw badRequest(`منبع ناموجود: ${p.resource.resourceId}`, { missing: [p.resource.resourceId] }, 'UNKNOWN_RESOURCE');
+}
+
+/** نتیجه‌ی هسته را به شکل خروجی عملیات ساختاری درمی‌آورد؛ خطا با پیام فارسیِ هسته 400 می‌شود */
+function recurringOutcome(r: RecurrenceResult): { ok: true; tasks: Task[]; nextId: number } & Record<string, unknown> {
+  if (!r.ok) throw badRequest(r.message, { reason: r.error }, `RECURRENCE_${r.error}`);
+  return { ok: true, tasks: r.tasks, summaryId: r.summaryId, dates: r.dates, addedIds: r.addedIds, removedIds: r.removedIds, keptIds: r.keptIds, nextId: r.nextId };
+}
+
+const recurrenceAudit = (p: RecurrencePattern, extra: Record<string, unknown>): Record<string, unknown> => {
+  const dates = (extra['dates'] as string[] | undefined) ?? [];
+  return { name: p.name, summary: recurrenceText(p), occurrences: dates.length, first: dates[0] ?? null, last: dates[dates.length - 1] ?? null };
+};
+
 export function tasksRouter(pool: Pool): Router {
   const r = Router({ mergeParams: true });
   const base = projectAccess(pool);
@@ -75,7 +101,7 @@ export function tasksRouter(pool: Pool): Router {
     res: Response,
     expectedStructureVersion: number,
     audit: (before: readonly Task[], after: readonly Task[], extra: Record<string, unknown>) => AuditEntry[],
-    op: (tasks: readonly Task[], db: Db) => Promise<StructureResult<Record<string, unknown>>>,
+    op: (tasks: readonly Task[], db: Db, ctx: { start: string; calendar: WorkCalendar }) => Promise<StructureResult<Record<string, unknown>>>,
   ): Promise<void> {
     const access = projectOf(req);
     const user = actorOf(req);
@@ -86,7 +112,7 @@ export function tasksRouter(pool: Pool): Router {
       }
       const before = await loadTasks(tx, access.id);
       const calendar = await loadCalendar(tx, access.id);
-      const raw = await op(before, tx);
+      const raw = await op(before, tx, { start: project.start_date, calendar });
       const result = guardCycle(raw as StructureResult<{ tasks: Task[] }> as never, { start: project.start_date, status: project.status_date, calendar }) as StructureResult<Record<string, unknown>>;
       if (!result.ok) throw badRequest(result.message, { reason: result.error }, `STRUCTURE_${result.error}`);
       await saveTasks(tx, access.id, before, result.tasks, user.id);
@@ -115,6 +141,56 @@ export function tasksRouter(pool: Pool): Router {
       async (tasks, tx) => {
         const next = await one<{ n: number }>(tx, 'SELECT next_seq($1, $2) AS n', [pid, 'task']);
         return insertTask(tasks, { referenceId: b.referenceId, asChild: b.asChild, kind: b.kind, name: b.name, newId: next!.n });
+      },
+    );
+  });
+
+  r.post('/tasks/recurring', base, requireCap('schedule.edit'), async (req: Request, res: Response) => {
+    const b = recurringCreateBody.parse(req.body);
+    const pid = projectOf(req).id;
+    await structural(
+      req,
+      res,
+      b.structureVersion,
+      (_before, _after, extra) => [{ projectId: pid, action: 'task.recurring.create', entity: 'task', entityId: String(extra['summaryId']), newValue: recurrenceAudit(b.pattern, extra), details: { referenceId: b.referenceId, asChild: b.asChild } }],
+      async (tasks, tx, ctx) => {
+        await assertKnownResource(tx, pid, b.pattern);
+        const firstId = await firstFreeTaskId(tx, pid, tasks);
+        const out = recurringOutcome(createRecurrence(tasks, b.pattern, { projectStart: ctx.start, calendar: ctx.calendar, referenceId: b.referenceId, asChild: b.asChild, firstId }));
+        await tx.query('SELECT bump_seq($1, $2, $3)', [pid, 'task', out.nextId]);
+        return out;
+      },
+    );
+  });
+
+  r.put('/tasks/:id/recurring', base, requireCap('schedule.edit'), async (req: Request, res: Response) => {
+    const id = intParam(req, 'id');
+    const b = recurringUpdateBody.parse(req.body);
+    const pid = projectOf(req).id;
+    await structural(
+      req,
+      res,
+      b.structureVersion,
+      (before, _after, extra) => {
+        const old = before.find((t) => t.id === id)?.recurrence ?? null;
+        return [
+          {
+            projectId: pid,
+            action: 'task.recurring.update',
+            entity: 'task',
+            entityId: id,
+            oldValue: old ? { name: old.name, summary: recurrenceText(old) } : null,
+            newValue: recurrenceAudit(b.pattern, extra),
+            details: { added: (extra['addedIds'] as number[]).length, removed: (extra['removedIds'] as number[]).length, kept: (extra['keptIds'] as number[]).length },
+          },
+        ];
+      },
+      async (tasks, tx, ctx) => {
+        await assertKnownResource(tx, pid, b.pattern);
+        const firstId = await firstFreeTaskId(tx, pid, tasks);
+        const out = recurringOutcome(updateRecurrence(tasks, id, b.pattern, { projectStart: ctx.start, calendar: ctx.calendar, firstId }));
+        await tx.query('SELECT bump_seq($1, $2, $3)', [pid, 'task', out.nextId]);
+        return out;
       },
     );
   });

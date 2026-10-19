@@ -3,6 +3,7 @@
  * که پایگاه‌داده اجبار می‌کند؛ این‌جا هر ناسازگاری اصلاح و در `warnings` گزارش می‌شود (چیزی بی‌صدا از دست نمی‌رود).
  */
 import type { ProjectModel } from './project.ts';
+import { validateRecurrence } from './recurrence.ts';
 import type { Assignment, Dependency, Task } from './types.ts';
 
 export interface RepairWarning {
@@ -88,8 +89,22 @@ export function repairForStorage(input: ProjectModel): RepairResult {
         assignments: [],
         directCosts: [],
       });
+      if (t.recurrence) {
+        const bad = validateRecurrence(t.recurrence);
+        if (bad) {
+          warn('RECURRENCE_DROPPED', `الگوی تکرار نامعتبر بود و حذف شد (رخدادها فعالیت عادی می‌مانند): ${bad}`, t.id);
+          t.recurrence = null;
+        } else if (t.recurrence.resource && !resourceIds.has(t.recurrence.resource.resourceId)) {
+          warn('RECURRENCE_RESOURCE_DROPPED', 'منبع الگوی تکرار وجود ندارد؛ از الگو حذف شد.', t.id);
+          t.recurrence = { ...t.recurrence, resource: null };
+        }
+      }
       return t;
     }
+    if (t.recurrence) {
+      warn('RECURRENCE_DROPPED', 'الگوی تکرار فقط برای فعالیت خلاصه معنا دارد؛ حذف شد.', t.id);
+    }
+    t.recurrence = null;
     t.duration = t.kind === 'milestone' ? 0 : Math.max(1, Math.round(t.duration));
     t.weight = round(Math.max(0, t.weight), 3);
     t.work = round(Math.max(0, t.work), 3);

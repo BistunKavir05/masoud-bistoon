@@ -16,6 +16,8 @@ import type { BaselineVersion, DocumentType, ProjectDocument, ProjectModel } fro
 import { DOCUMENT_TYPE_LABELS } from './project.ts';
 import type { ChangeRequest, ChangeStatus, Decision, DecisionStatus, Issue, IssuePriority, IssueStatus, Risk, RiskCategory, RiskStatus, RiskStrategy } from './records.ts';
 import { CHANGE_STATUS_LABELS, DECISION_STATUS_LABELS, ISSUE_PRIORITY_LABELS, ISSUE_STATUS_LABELS, RISK_CATEGORY_LABELS, RISK_STATUS_LABELS, RISK_STRATEGY_LABELS } from './records.ts';
+import type { RecurrencePattern, RecurrenceType } from './recurrence.ts';
+import { validateRecurrence } from './recurrence.ts';
 import type { Assignment, Baseline, BaselineItem, CostEntry, Resource, ResourceType, Snapshot, Task, WorkCalendar } from './types.ts';
 
 export interface LegacyWarning {
@@ -86,6 +88,41 @@ function normalizeUrl(u: unknown): string {
 }
 
 /** `name:units, name2` ← رشته‌ی منابع قدیمی */
+const LEGACY_REC_TYPES: Record<string, RecurrenceType> = { d: 'daily', w: 'weekly', m: 'monthly', y: 'yearly' };
+
+/** الگوی تکرار نسخه‌ی قدیمی (`rec` روی فعالیت خلاصه) به الگوی جدید */
+function legacyRecurrence(rec: Obj, groupName: string, resourceIdFor: (name: string) => number): { ok: true; pattern: RecurrencePattern } | { ok: false; error: string } {
+  const type = LEGACY_REC_TYPES[String(rec['type'] ?? '')];
+  if (!type) return { ok: false, error: 'نوع الگو نامشخص است.' };
+  const start = dt(rec['st']);
+  if (!start) return { ok: false, error: 'تاریخ شروع بازه نامعتبر است.' };
+  const wdays = (Array.isArray(rec['wd']) ? rec['wd'] : []).map((d) => Math.trunc(num(d, NaN))).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  const res = parseLegacyResources(String(rec['res'] ?? ''))[0];
+  const endMode = rec['em'] === 'd' ? 'date' : 'count';
+  const pattern: RecurrencePattern = {
+    name: str(rec['nm'], 300).trim() || groupName.trim() || 'فعالیت تکرارشونده',
+    duration: Math.trunc(num(rec['dur'], 1)),
+    type,
+    every: Math.trunc(num(rec['every'], 1)),
+    weekdays: [...new Set(wdays)],
+    monthMode: rec['md'] === 'ord' ? 'ordinal' : 'day',
+    monthDay: Math.trunc(num(rec['mday'], 1)),
+    monthOrdinal: Math.trunc(num(rec['mord'], 1)),
+    monthWeekday: Math.trunc(num(rec['mwd'], 6)),
+    yearMonth: Math.trunc(num(rec['ym'], 1)),
+    yearDay: Math.trunc(num(rec['yd'], 1)),
+    start,
+    endMode,
+    count: Math.trunc(num(rec['cnt'], 10)),
+    endDate: dt(rec['end']),
+    resource: res && res.name && res.units > 0 ? { resourceId: resourceIdFor(res.name), units: res.units } : null,
+    weighted: Boolean(rec['wt']),
+    levelOfEffort: Boolean(rec['loe']),
+  };
+  const bad = validateRecurrence(pattern);
+  return bad ? { ok: false, error: bad } : { ok: true, pattern };
+}
+
 function parseLegacyResources(s: string): { name: string; units: number }[] {
   return s
     .split(/[,،]/)
@@ -186,6 +223,12 @@ export function importLegacyProject(raw: unknown, opts: LegacyImportOptions): Le
       .filter((l): l is Obj => isObj(l) && Number.isFinite(+(l.a as number)) && +(l.a as number) > 0)
       .map((l) => ({ name: str(l.n, 80), amount: +(l.a as number) }));
     const ac = t.ac == null || t.ac === '' ? null : Number.isFinite(+(t.ac as number)) && +(t.ac as number) >= 0 ? +(t.ac as number) : null;
+    let recurrence: RecurrencePattern | null = null;
+    if (isSummary && isObj(t.rec) && !t.rec['imp']) {
+      const conv = legacyRecurrence(t.rec, String(t.name ?? ''), (n) => resourceFor(n).id);
+      if (conv.ok) recurrence = conv.pattern;
+      else warn('RECURRENCE_DROPPED', `الگوی تکرار نامعتبر بود و حذف شد (رخدادها فعالیت عادی می‌مانند): ${conv.error}`, id);
+    }
     tasks.push({
       id,
       name: String(t.name ?? ''),
@@ -206,6 +249,7 @@ export function importLegacyProject(raw: unknown, opts: LegacyImportOptions): Le
       directCosts: isSummary ? [] : cs,
       legacyActualCost: isSummary ? null : ac,
       costTracked: !isSummary && Boolean(t.cb),
+      recurrence,
     });
   }
 
