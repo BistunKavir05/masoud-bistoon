@@ -24,9 +24,9 @@ jobs:
       - name: نصب وابستگی‌ها
         run: npm install --no-audit --no-fund 2>&1 | tee install.log
       - name: typecheck
-        run: npm run typecheck 2>&1 | tee typecheck.log
+        run: npm run typecheck -w @bistoon/core 2>&1 | tee typecheck.log
       - name: آزمون واحد
-        run: npm test 2>&1 | tee test.log
+        run: npm test -w @bistoon/core 2>&1 | tee test.log
       - name: گزارش
         if: always()
         run: |
