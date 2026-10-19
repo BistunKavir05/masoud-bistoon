@@ -432,3 +432,11 @@ button.gn-toggle:hover { background: var(--surface-3); }
 .audit-kv > div { display: grid; grid-template-columns: minmax(80px, 30%) 1fr; gap: 8px; }
 .audit-kv dt { color: var(--muted); font-size: 12.5px; }
 .audit-kv dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-size: 13px; }
+
+/* ───── کاربران ───── */
+.role-checks { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px 10px; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px; }
+.role-checks legend { padding: 0 6px; font-size: 13px; color: var(--muted); }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.tbl tr.inactive td:not(.c) { opacity: 0.6; }
+.matrix-tbl td:first-child { min-width: 260px; }
+details[data-testid='matrix'] > summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
