@@ -19,3 +19,4 @@ export * from './taskPatch.ts';
 export * from './permissions.ts';
 export * from './dto.ts';
 export * from './repair.ts';
+export * from './dashboard.ts';

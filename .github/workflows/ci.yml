@@ -110,10 +110,55 @@ jobs:
           name: api
           path: ci-out/api
 
+  web:
+    name: رابط کاربری (typecheck + ساخت + آزمون انتها‌به‌انتها)
+    runs-on: ubuntu-latest
+    needs: core
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      SHOT_DIR: ci-out/web/shots
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: typecheck
+        run: |
+          mkdir -p ci-out/web
+          npm run typecheck -w @bistoon/web 2>&1 | tee ci-out/web/typecheck.log
+      - name: آزمون واحد
+        run: npm test -w @bistoon/web 2>&1 | tee ci-out/web/test.log
+      - name: ساخت
+        run: npm run build -w @bistoon/web 2>&1 | tee ci-out/web/build.log
+      - name: نصب Chromium
+        run: npx playwright install --with-deps chromium 2>&1 | tail -3
+      - name: آزمون انتها‌به‌انتها
+        run: |
+          cd apps/web
+          node --test --test-concurrency=1 e2e/*.e2e.ts 2>&1 | tee ../../ci-out/web/e2e.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web
+          path: ci-out/web
+
   publish-logs:
     name: انتشار گزارش‌ها در شاخه‌ی ci-logs
     runs-on: ubuntu-latest
-    needs: [core, oracle, api]
+    needs: [core, oracle, api, web]
     if: always() && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4

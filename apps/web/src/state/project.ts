@@ -3,7 +3,7 @@
  * هر تغییر موفق، مدل را دوباره از سرور می‌خواند تا رابط همیشه با پایگاه‌داده یکی باشد.
  */
 import { analyzeProject, emptyCharter, emptyContract } from '@bistoon/core';
-import type { Analysis, Capability, ModelBundle, ProjectModel, ScheduleFailure } from '@bistoon/core';
+import type { Analysis, Capability, ModelBundle, ProjectModel, ScheduleFailure, TaskDto } from '@bistoon/core';
 import { apiGet } from '../api/client.ts';
 import { errorMessage } from '../api/client.ts';
 import { createStore, useStore } from './store.ts';
@@ -99,6 +99,14 @@ export async function reloadProject(): Promise<void> {
     if (my === seq) projectStore.set((s) => ({ ...s, refreshing: false, error: errorMessage(e) }));
     throw e;
   }
+}
+
+/** جایگزینی یک فعالیت در حافظه (پاسخ PATCH) و محاسبه‌ی دوباره، بدون رفت‌وبرگشت کامل؛ بعدش مدل رسمی دوباره خوانده می‌شود. */
+export function patchTaskLocal(task: TaskDto): void {
+  const s = projectStore.get();
+  if (!s.bundle || !s.bundle.tasks || s.pid === null) return;
+  const tasks = s.bundle.tasks.map((t) => (t.id === task.id ? task : t));
+  apply(s.pid, { ...s.bundle, tasks });
 }
 
 export function closeProject(): void {

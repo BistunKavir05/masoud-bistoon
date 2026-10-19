@@ -44,7 +44,10 @@ export function Btn({ children, onClick, kind = '', size = '', icon, iconOnly, l
 export function useAction(): { busy: boolean; run: <T>(fn: () => Promise<T>, okMessage?: string) => Promise<T | undefined> } {
   const [busy, setBusy] = useState(false);
   const alive = useRef(true);
-  useEffect(() => () => void (alive.current = false), []);
+  useEffect(() => {
+    alive.current = true;
+    return () => void (alive.current = false);
+  }, []);
   const run = async <T,>(fn: () => Promise<T>, okMessage?: string): Promise<T | undefined> => {
     setBusy(true);
     try {
