@@ -145,6 +145,8 @@ jobs:
         run: npm run build -w @bistoon/web 2>&1 | tee ci-out/web/build.log
       - name: نصب Chromium
         run: npx playwright install --with-deps chromium 2>&1 | tail -3
+      - name: ابزار بررسی PDF (poppler)
+        run: sudo apt-get install -y --no-install-recommends poppler-utils 2>&1 | tail -2
       - name: آزمون انتها‌به‌انتها
         run: |
           cd apps/web
