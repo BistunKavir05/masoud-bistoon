@@ -5,7 +5,7 @@ import { defaultMigrationsDir, migrate } from './migrate.ts';
 import { purgeExpiredSessions } from './auth/sessions.ts';
 
 const config = loadConfig();
-const pool = createPool(config.databaseUrl);
+const pool = createPool(config.databaseUrl, 10, (e) => stdoutLogger({ level: 'error', msg: 'idle db client error', error: String(e) }));
 
 const applied = await migrate(pool, config.migrationsDir ?? defaultMigrationsDir(), (m) => stdoutLogger({ level: 'info', msg: m }));
 if (applied.length > 0) stdoutLogger({ level: 'info', msg: 'migrations applied', applied });

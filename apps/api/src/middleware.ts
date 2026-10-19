@@ -143,10 +143,12 @@ export const requireSystemAdmin: RequestHandler = (req, _res, next) => {
 /** محدودکننده‌ی ساده‌ی در حافظه برای تلاش‌های ناموفق ورود به‌ازای IP */
 export class FailureLimiter {
   private readonly hits = new Map<string, number[]>();
-  constructor(
-    private readonly max: number,
-    private readonly windowMs: number,
-  ) {}
+  private readonly max: number;
+  private readonly windowMs: number;
+  constructor(max: number, windowMs: number) {
+    this.max = max;
+    this.windowMs = windowMs;
+  }
   blocked(key: string, now = Date.now()): boolean {
     const list = (this.hits.get(key) ?? []).filter((t) => now - t < this.windowMs);
     this.hits.set(key, list);

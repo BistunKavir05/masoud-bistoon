@@ -91,6 +91,10 @@ jobs:
         run: npm run typecheck -w @bistoon/api 2>&1 | tee ci-out/api/typecheck.log
       - name: آزمون API
         run: npm test -w @bistoon/api 2>&1 | tee ci-out/api/test.log
+      - name: آزمون دود سرور واقعی (بدون vitest، مستقیم با Node)
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE smoke'
+          cd apps/api && DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/smoke node scripts/smoke.mjs 2>&1 | tee ../../ci-out/api/smoke.log
       - name: برش لاک‌فایل
         if: always()
         run: cp -f package-lock.json ci-out/api/package-lock.json 2>/dev/null || true

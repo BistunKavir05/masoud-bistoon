@@ -18,8 +18,11 @@ const customTypes = {
   },
 };
 
-export function createPool(connectionString: string, max = 10): Pool {
-  return new Pool({ connectionString, max, types: customTypes as never, idleTimeoutMillis: 30_000 });
+export function createPool(connectionString: string, max = 10, onError: (e: Error) => void = () => {}): Pool {
+  const pool = new Pool({ connectionString, max, types: customTypes as never, idleTimeoutMillis: 30_000 });
+  // خطای یک اتصال بیکار (مثلاً ری‌استارت پایگاه‌داده، کد 57P01) نباید کل فرایند را بیندازد؛ اتصال خراب از Pool حذف می‌شود.
+  pool.on('error', onError);
+  return pool;
 }
 
 export function poolDb(pool: Pool): Db {
