@@ -1,0 +1,16 @@
+{
+  "name": "@bistoon/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "هسته‌ی محاسبات بیستون: تاریخ و تقویم، CPM، پیشرفت، ارزش کسب‌شده، پورسانت. بدون وابستگی به DOM، React یا پایگاه‌داده.",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
