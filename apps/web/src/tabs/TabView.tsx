@@ -6,6 +6,7 @@ import { ChatTab } from './chat/ChatTab.tsx';
 import { DocsTab } from './docs/DocsTab.tsx';
 import { LogTab } from './log/LogTab.tsx';
 import { PortfolioTab } from './portfolio/PortfolioTab.tsx';
+import { ReportTab } from './report/ReportTab.tsx';
 import { UsersTab } from './users/UsersTab.tsx';
 import { DashboardTab } from './dashboard/DashboardTab.tsx';
 import { FinanceTab } from './finance/FinanceTab.tsx';
@@ -42,6 +43,8 @@ export function TabView({ tab }: { tab: TabKey }) {
       return <LogTab />;
     case 'usr':
       return <UsersTab />;
+    case 'rep':
+      return <ReportTab />;
     case 'port':
       return <PortfolioTab />;
     case 'gantt':

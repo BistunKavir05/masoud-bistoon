@@ -25,3 +25,4 @@ export * from './dashboard.ts';
 export * from './csv.ts';
 export * from './costImport.ts';
 export * from './portfolio.ts';
+export * from './statusReport.ts';

@@ -288,6 +288,8 @@ table { border-collapse: collapse; }
   body { background: #fff; color: #000; }
   .card, .tbl-wrap { border-color: #999; }
   :root { color-scheme: light; }
+  html, body, #root { height: auto !important; overflow: visible !important; }
+  .page-head, .overlay { display: none !important; }
 }
 
 .tbl td.res { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -445,3 +447,26 @@ details[data-testid='matrix'] > summary { cursor: pointer; font-weight: 600; mar
 .port-tbl th, .port-tbl td { white-space: nowrap; }
 .port-tbl td:nth-child(2), .port-tbl th:nth-child(2) { position: sticky; inset-inline-start: 0; background: var(--surface); z-index: 1; }
 .port-tbl thead th:nth-child(2) { background: var(--surface-2); z-index: 2; }
+
+/* ───── گزارش وضعیت (روی صفحه و چاپ) ───── */
+.report { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 26px; margin-top: 14px; max-width: 980px; }
+.rep-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 12px; }
+.rep-head h1 { font-size: 13px; color: var(--ink-3); margin: 0; font-weight: 500; }
+.rep-head h2 { font-size: 22px; margin: 2px 0 0; }
+.report section { margin-top: 18px; }
+.report h3 { font-size: 15px; margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.rep-tbl th { text-align: start; font-weight: 500; color: var(--ink-3); }
+.rep-tbl tbody th { white-space: nowrap; }
+.rep-tbl td.n { white-space: nowrap; }
+.rep-list { margin: 0; padding-inline-start: 18px; }
+.rep-foot { margin-top: 22px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--ink-3); }
+@media print {
+  @page { size: A4; margin: 12mm; }
+  .report { border: 0; padding: 0; max-width: none; border-radius: 0; margin: 0; }
+  .report section, .rep-keep { break-inside: avoid; }
+  .report h3 { break-after: avoid; }
+  .rep-tbl tr { break-inside: avoid; }
+  .badge, .kpi, .stagebar .bar i, .tbl thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a { color: inherit; text-decoration: none; }
+  .report .tbl tbody tr:hover td { background: transparent; }
+}

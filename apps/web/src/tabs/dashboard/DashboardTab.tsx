@@ -1,18 +1,11 @@
 import { useMemo } from 'react';
 import { RISK_LEVEL_LABELS, computeDashboard, riskLevel, riskScore } from '@bistoon/core';
-import type { HealthStatus } from '@bistoon/core';
 import { faDate, faInt, faMoney, faNum, faPct, faRatio } from '../../lib/fmt.ts';
 import { useCan, useProjectState } from '../../state/project.ts';
 import { hrefOf } from '../../state/route.ts';
 import { Alert, Badge, Card, Empty, Kpi, PageHead, ProgressBar } from '../../ui/controls.tsx';
+import { HEALTH } from '../../ui/health.ts';
 import { StageRibbon } from '../../ui/StageRibbon.tsx';
-
-const HEALTH: Record<HealthStatus, { label: string; kind: 'ok' | 'warn' | 'bad' | '' }> = {
-  ok: { label: 'طبق برنامه', kind: 'ok' },
-  watch: { label: 'نیازمند توجه', kind: 'warn' },
-  late: { label: 'عقب از برنامه', kind: 'bad' },
-  unknown: { label: 'نامشخص', kind: '' },
-};
 
 export function DashboardTab() {
   const ps = useProjectState();
