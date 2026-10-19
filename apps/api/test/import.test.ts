@@ -67,6 +67,21 @@ describe('ورود از نسخه‌ی قدیمی', () => {
     expect(empty.status).toBe(400);
   });
 
+  it('dryRun: همان اعتبارسنجی و هشدارها را می‌دهد ولی پروژه نمی‌سازد', async () => {
+    const count = async (): Promise<number> => Number((await env.pool.query('SELECT count(*)::int AS n FROM projects')).rows[0].n);
+    const before = await count();
+    expect((await w.pm.req('POST', '/api/import/legacy?dryRun=1', legacyBackup())).status).toBe(403);
+    const r = await w.admin.req('POST', '/api/import/legacy?dryRun=1', legacyBackup());
+    expect(r.status).toBe(200);
+    expect(r.body.dryRun).toBe(true);
+    expect(r.body.name).toBe('پروژه‌ی قدیمی');
+    expect(r.body.summary).toMatchObject({ tasks: 5, resources: 2, costs: 1, risks: 1, snapshots: 2, baselineItems: 2, legacyLog: 2 });
+    expect(r.body.warnings.map((x: { code: string }) => x.code)).toContain('LEVEL_ADJUSTED');
+    expect(r.body.legacyUsers.length).toBe(2);
+    expect((await w.admin.req('POST', '/api/import/legacy?dryRun=1', { hello: 'world' })).status).toBe(400);
+    expect(await count()).toBe(before);
+  });
+
   it('پروژه با شناسه‌های اصلی، اصلاح‌ها و هشدارها ساخته می‌شود', async () => {
     const r = await w.admin.post('/api/import/legacy', legacyBackup());
     expect(r.status).toBe(201);

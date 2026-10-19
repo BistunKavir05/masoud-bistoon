@@ -38,6 +38,13 @@ export function importExportRouter(pool: Pool): Router {
     const user = actorOf(req);
     const sha = createHash('sha256').update(JSON.stringify(raw)).digest('hex');
     const warnings = [...imported.warnings, ...repaired.warnings];
+    const summary = { tasks: model.tasks.length, resources: model.resources.length, costs: model.costs.length, risks: model.risks.length, snapshots: model.snapshots.length, baselineItems: Object.keys(model.baseline).length, legacyLog: imported.log.length };
+    const legacyUsers = imported.users.map((u) => ({ ...u, suggestedRole: LEGACY_ROLE[u.role] }));
+    // پیش‌نمایش: همه‌ی اعتبارسنجی‌ها اجرا می‌شود ولی چیزی نوشته نمی‌شود
+    if (req.query['dryRun'] === '1') {
+      res.json({ dryRun: true, name: model.name, start: model.start, summary, warnings, legacyUsers });
+      return;
+    }
     const pid = await withTx(pool, async (tx) => {
       const id = await insertProjectShell(tx, { name: model.name, start: model.start, status: model.status, contractEnd: model.contractEnd, finance: model.finance }, user.id);
       await persistModel(tx, id, model, user.id);
@@ -61,12 +68,7 @@ export function importExportRouter(pool: Pool): Router {
       }
       return id;
     });
-    res.status(201).json({
-      projectId: pid,
-      summary: { tasks: model.tasks.length, resources: model.resources.length, costs: model.costs.length, risks: model.risks.length, snapshots: model.snapshots.length, baselineItems: Object.keys(model.baseline).length, legacyLog: imported.log.length },
-      warnings,
-      legacyUsers: imported.users.map((u) => ({ ...u, suggestedRole: LEGACY_ROLE[u.role] })),
-    });
+    res.status(201).json({ projectId: pid, summary, warnings, legacyUsers });
   });
 
   /** بازیابی فایل پشتیبان این سامانه به‌عنوان پروژه‌ی جدید */
@@ -75,13 +77,31 @@ export function importExportRouter(pool: Pool): Router {
     const repaired = repairForStorage(model);
     if (!repaired.ok) throw badRequest(repaired.error, undefined, 'IMPORT_INVALID');
     const user = actorOf(req);
+    const m = repaired.model;
+    const summary = { tasks: m.tasks.length, resources: m.resources.length, costs: m.costs.length, risks: m.risks.length, issues: m.issues.length, changes: m.changes.length, decisions: m.decisions.length, documents: m.documents.length, snapshots: m.snapshots.length, baselineItems: Object.keys(m.baseline).length, baselineHistory: m.baselineHistory.length };
+    // پیش‌نمایش: اعتبارسنجی کامل ولی بدون نوشتن. بازیابی همیشه پروژه‌ی «جدید» می‌سازد و کاربران/نقش‌ها را وارد نمی‌کند.
+    if (req.query['dryRun'] === '1') {
+      const doc = (req.body ?? {}) as { exportedAt?: unknown; exportedBy?: unknown; version?: unknown };
+      res.json({
+        dryRun: true,
+        name: m.name,
+        start: m.start,
+        status: m.status,
+        schemaVersion: doc.version,
+        exportedAt: typeof doc.exportedAt === 'string' ? doc.exportedAt : null,
+        exportedBy: typeof doc.exportedBy === 'string' ? doc.exportedBy : null,
+        summary,
+        warnings: repaired.warnings,
+      });
+      return;
+    }
     const pid = await withTx(pool, async (tx) => {
       const id = await insertProjectShell(tx, { name: repaired.model.name, start: repaired.model.start, status: repaired.model.status, contractEnd: repaired.model.contractEnd, finance: repaired.model.finance }, user.id);
       await persistModel(tx, id, repaired.model, user.id);
       await writeAudit(tx, actorInfo(req), { projectId: id, action: 'project.import', entity: 'project', entityId: id, newValue: { tasks: repaired.model.tasks.length, warnings: repaired.warnings.length } });
       return id;
     });
-    res.status(201).json({ projectId: pid, warnings: repaired.warnings });
+    res.status(201).json({ projectId: pid, summary, warnings: repaired.warnings });
   });
 
   /** پشتیبان کامل پروژه (JSON). بدون دسترسی به پورسانت، فیلدهای پورسانت در پشتیبان صفر می‌شود. */

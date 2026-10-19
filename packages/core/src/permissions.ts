@@ -49,6 +49,7 @@ export const CAPABILITY_LABELS = {
   'project.settings': 'تنظیمات پروژه (نام، تاریخ‌ها، مالی)',
   'members.manage': 'مدیریت اعضا و نقش‌ها',
   'data.export': 'خروجی گرفتن از کل داده‌ی پروژه',
+  'data.import': 'ورود برنامه از فایل MS Project به پروژه',
 } as const;
 
 export type Capability = keyof typeof CAPABILITY_LABELS;
@@ -90,6 +91,7 @@ export const PERMISSION_MATRIX: Readonly<Record<Capability, readonly Role[]>> = 
   'project.settings': [A, P],
   'members.manage': [A],
   'data.export': [A, P],
+  'data.import': [A],
 };
 
 export function can(roles: Iterable<Role>, capability: Capability): boolean {
@@ -127,5 +129,6 @@ const MUTATIONS = new Set<Capability>([
   'documents.edit',
   'project.settings',
   'members.manage',
+  'data.import',
 ]);
 export const isMutation = (c: Capability): boolean => MUTATIONS.has(c);
