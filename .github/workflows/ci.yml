@@ -94,6 +94,12 @@ jobs:
       - name: برش لاک‌فایل
         if: always()
         run: cp -f package-lock.json ci-out/api/package-lock.json 2>/dev/null || true
+      - name: بسته‌ی وابستگی‌های اجرایی (برای اجرای محلی توسعه)
+        if: always()
+        run: |
+          mkdir -p ci-out/api
+          npm ls --omit=dev --all --parseable --workspace @bistoon/api 2>/dev/null | grep '/node_modules/' | sed "s|^$PWD/||" | sort -u > /tmp/prod-paths.txt || true
+          tar czf ci-out/api/prod-node_modules.tgz -T /tmp/prod-paths.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -107,9 +113,6 @@ jobs:
     if: always() && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ci-logs
-        continue-on-error: true
       - uses: actions/download-artifact@v4
         with:
           path: incoming
@@ -118,16 +121,12 @@ jobs:
         run: |
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"
-          if [ -z "$(git rev-parse --verify -q HEAD)" ] || [ "$(git rev-parse --abbrev-ref HEAD)" != "ci-logs" ]; then
-            git checkout --orphan ci-logs
-            git rm -rf . >/dev/null 2>&1 || true
-          fi
-          rm -rf latest
-          mkdir -p latest "runs/${GITHUB_RUN_ID}"
+          git checkout --orphan ci-logs
+          git rm -rf . >/dev/null 2>&1 || true
+          mkdir -p latest
           cp -r incoming/* latest/ 2>/dev/null || true
-          cp -r incoming/* "runs/${GITHUB_RUN_ID}/" 2>/dev/null || true
           printf '%s\n%s\n%s\n' "sha=${GITHUB_SHA}" "ref=${GITHUB_REF}" "run=${GITHUB_RUN_ID}" > latest/meta.txt
           rm -rf incoming
           git add -A
-          git commit -m "logs for ${GITHUB_SHA}" || true
+          git commit -m "logs for ${GITHUB_SHA}"
           git push origin ci-logs --force
