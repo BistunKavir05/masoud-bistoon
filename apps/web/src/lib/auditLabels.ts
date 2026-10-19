@@ -46,6 +46,7 @@ const ACTION_LABELS: Record<string, string> = {
   'member.set': 'تنظیم نقش عضو',
   'project.export': 'خروجی گرفتن از پروژه',
   'project.import': 'ورود پروژه',
+  'portfolio.import': 'ورود گروهی اطلاعات قرارداد از جدول',
   'project.import.legacy': 'ورود پروژه از نسخه‌ی قدیمی',
   'legacy.change': 'تغییر واردشده از نسخه‌ی قدیمی',
 };

@@ -14,7 +14,7 @@ import { loadCharter, loadContract, loadProjectRow, lockProject, redactContract 
 
 // ───────────────────────── منشور ─────────────────────────
 
-const CHARTER_COLS: Record<string, string> = {
+export const CHARTER_COLS: Record<string, string> = {
   client: 'client',
   location: 'location',
   subject: 'subject',
@@ -26,7 +26,7 @@ const CHARTER_COLS: Record<string, string> = {
   assumptions: 'assumptions',
   stakeholders: 'stakeholders',
 };
-const charterBody = z
+export const charterBody = z
   .object({
     client: text(300),
     location: text(300),
@@ -46,7 +46,7 @@ const charterBody = z
 // ───────────────────────── قرارداد ─────────────────────────
 
 /** هر فیلد قرارداد و قابلیتی که برای تغییرش لازم است */
-const CONTRACT_FIELDS: Record<string, { col: string; cap: Capability }> = {
+export const CONTRACT_FIELDS: Record<string, { col: string; cap: Capability }> = {
   number: { col: 'number', cap: 'contract.edit' },
   date: { col: 'contract_date', cap: 'contract.edit' },
   type: { col: 'type', cap: 'contract.edit' },
@@ -66,7 +66,7 @@ const CONTRACT_FIELDS: Record<string, { col: string; cap: Capability }> = {
   salesApproval: { col: 'sales_approval', cap: 'commission.approve' },
 };
 const rial = z.number().finite().int().min(0).max(9e15);
-const contractBody = z
+export const contractBody = z
   .object({
     number: text(100),
     date: isoDateOrNull,

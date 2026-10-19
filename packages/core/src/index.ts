@@ -24,3 +24,4 @@ export * from './repair.ts';
 export * from './dashboard.ts';
 export * from './csv.ts';
 export * from './costImport.ts';
+export * from './portfolio.ts';

@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react';
 import { COST_STATUS_LABELS, COST_TEMPLATE_HEADER, COST_TEMPLATE_SAMPLE, MAX_IMPORT_ROWS, entriesToImport, previewCostImport, toCsv } from '@bistoon/core';
 import type { CostEntry, CostImportPreview, CostRowStatus, Task } from '@bistoon/core';
 import { apiPost } from '../../api/client.ts';
-import { MIME_CSV, decodeText, downloadFile } from '../../lib/download.ts';
+import { MIME_CSV, downloadFile } from '../../lib/download.ts';
 import { faDate, faInt, faMoney } from '../../lib/fmt.ts';
-import { readXlsx } from '../../lib/xlsx.ts';
+import { TableFileError, readTableFile } from '../../lib/readTable.ts';
 import { reloadProject } from '../../state/project.ts';
 import { Alert, Badge, Btn, CheckField, useAction } from '../../ui/controls.tsx';
-import { openDialog } from '../../ui/dialogs.tsx';
+import { alertDialog, openDialog } from '../../ui/dialogs.tsx';
 
 const KIND: Record<CostRowStatus, '' | 'ok' | 'warn' | 'bad' | 'brand' | 'accent'> = {
   ok: 'ok',
@@ -26,39 +26,11 @@ export function downloadCostTemplate(): void {
 /** فایل را می‌خواند و پیش‌نمایش را در گفتگو نشان می‌دهد؛ تا «تأیید» چیزی ثبت نمی‌شود. */
 export async function startCostImport(file: File, ctx: { pid: number; tasks: readonly Task[]; ledger: readonly CostEntry[]; unit: string }): Promise<void> {
   let rows: unknown[][];
-  let note = '';
+  let note: string;
   try {
-    const buf = await file.arrayBuffer();
-    if (/\.xlsx$/i.test(file.name)) rows = (await readXlsx(buf)).rows;
-    else if (/\.(csv|txt)$/i.test(file.name)) {
-      const d = decodeText(buf);
-      if (d.encoding !== 'utf-8') note = 'کدگذاری فایل UTF-8 نبود و با «ویندوز ۱۲۵۶» خوانده شد؛ اگر حروف درست نیست، فایل را به‌صورت «CSV UTF-8» ذخیره کنید.';
-      const { parseCsv } = await import('@bistoon/core');
-      rows = parseCsv(d.text);
-    } else {
-      void openDialog('فایل پشتیبانی نمی‌شود', (close) => (
-        <>
-          <div className="body">فقط فایل‌های «.xlsx» و «.csv» خوانده می‌شود. اگر فایل «.xls» قدیمی دارید، آن را در Excel با «Save As ← Excel Workbook (.xlsx)» یا «CSV UTF-8» ذخیره کنید.</div>
-          <footer>
-            <Btn kind="primary" onClick={() => close()}>
-              بسیار خوب
-            </Btn>
-          </footer>
-        </>
-      ));
-      return;
-    }
+    ({ rows, note } = await readTableFile(file));
   } catch (e) {
-    void openDialog('خواندن فایل ممکن نشد', (close) => (
-      <>
-        <div className="body">{e instanceof Error ? e.message : 'فایل خوانده نشد.'}</div>
-        <footer>
-          <Btn kind="primary" onClick={() => close()}>
-            بسیار خوب
-          </Btn>
-        </footer>
-      </>
-    ));
+    await alertDialog(e instanceof TableFileError ? e.title : 'خواندن فایل ممکن نشد', e instanceof Error ? e.message : 'فایل خوانده نشد.');
     return;
   }
   const r = previewCostImport(rows, { tasks: ctx.tasks, ledger: ctx.ledger });

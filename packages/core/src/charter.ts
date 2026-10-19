@@ -19,6 +19,7 @@ export function emptyCharter(): Charter {
 }
 
 export type SalesApproval = 'pending' | 'approved' | 'rejected';
+export const SALES_APPROVAL_LABELS: Record<SalesApproval, string> = { pending: 'در انتظار تأیید', approved: 'تأییدشده', rejected: 'ردشده' };
 export type RetentionMode = 'fixed' | 'percent';
 
 export interface Contract {

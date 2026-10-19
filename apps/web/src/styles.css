@@ -440,3 +440,8 @@ button.gn-toggle:hover { background: var(--surface-3); }
 .tbl tr.inactive td:not(.c) { opacity: 0.6; }
 .matrix-tbl td:first-child { min-width: 260px; }
 details[data-testid='matrix'] > summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+
+/* ───── مدیریت پروژه‌ها ───── */
+.port-tbl th, .port-tbl td { white-space: nowrap; }
+.port-tbl td:nth-child(2), .port-tbl th:nth-child(2) { position: sticky; inset-inline-start: 0; background: var(--surface); z-index: 1; }
+.port-tbl thead th:nth-child(2) { background: var(--surface-2); z-index: 2; }

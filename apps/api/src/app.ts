@@ -19,6 +19,7 @@ import { documentsRouter } from './routes/documents.ts';
 import { importExportRouter } from './routes/importExport.ts';
 import { levelingRouter } from './routes/leveling.ts';
 import { modelRouter } from './routes/model.ts';
+import { portfolioRouter } from './routes/portfolio.ts';
 import { projectsRouter } from './routes/projects.ts';
 import { recordsRouter } from './routes/records.ts';
 import { resourcesRouter } from './routes/resources.ts';
@@ -64,6 +65,7 @@ export function createApp({ pool, config, log = stdoutLogger }: AppDeps): Expres
   api.use('/auth', auth.session);
   api.use(usersRouter(pool));
   api.use(projectsRouter(pool));
+  api.use(portfolioRouter(pool));
   api.use(importExportRouter(pool));
   api.use('/projects/:pid', modelRouter(pool));
   api.use('/projects/:pid', tasksRouter(pool));

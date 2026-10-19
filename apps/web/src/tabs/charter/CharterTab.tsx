@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { commissionPayable, contractWarnings, emptyContract, retentionAmount } from '@bistoon/core';
+import { commissionPayable, contractWarnings, emptyContract, retentionAmount, SALES_APPROVAL_LABELS } from '@bistoon/core';
 import type { CharterDto, Contract, ContractDto, SalesApproval } from '@bistoon/core';
 import { faDate, faMoney, faNum, faPct } from '../../lib/fmt.ts';
 import { useCan, useProjectState } from '../../state/project.ts';
@@ -7,7 +7,6 @@ import { Alert, Badge, Btn, Card, Empty, Kpi, PageHead, ProgressBar } from '../.
 import { openFormDialog } from '../records/RecordTable.tsx';
 import type { FormSpec } from '../records/RecordTable.tsx';
 
-const APPROVAL_LABELS: Record<SalesApproval, string> = { pending: 'در انتظار تأیید', approved: 'تأییدشده', rejected: 'ردشده' };
 
 const charterSpec: FormSpec<CharterDto> = {
   path: 'charter',
@@ -90,7 +89,7 @@ const approvalSpec: FormSpec<ContractDto> = {
       label: 'وضعیت تأیید',
       kind: 'select',
       emptyLabel: '— ثبت نشده —',
-      options: (Object.keys(APPROVAL_LABELS) as SalesApproval[]).map((v) => ({ value: v, label: APPROVAL_LABELS[v] })),
+      options: (Object.keys(SALES_APPROVAL_LABELS) as SalesApproval[]).map((v) => ({ value: v, label: SALES_APPROVAL_LABELS[v] })),
     },
   ],
 };
@@ -256,7 +255,7 @@ export function CharterTab() {
               <Kpi label="کل استحقاق" value={m(pay.total)} />
               <Kpi label="قابل پرداخت تا امروز" value={m(pay.payable)} tone={pay.payable > 0 ? 'ok' : ''} sub={`نسبت وصول: ${faPct(pay.collectedRatio * 100)}`} />
               <Kpi label="باقی‌مانده تا وصول" value={m(pay.pending)} />
-              <Kpi label="وضعیت تأیید" value={contract.salesApproval ? APPROVAL_LABELS[contract.salesApproval] : 'ثبت نشده'} tone={contract.salesApproval === 'approved' ? 'ok' : contract.salesApproval === 'rejected' ? 'bad' : ''} />
+              <Kpi label="وضعیت تأیید" value={contract.salesApproval ? SALES_APPROVAL_LABELS[contract.salesApproval] : 'ثبت نشده'} tone={contract.salesApproval === 'approved' ? 'ok' : contract.salesApproval === 'rejected' ? 'bad' : ''} />
             </div>
             <div className="tbl-wrap" style={{ marginTop: 14 }}>
               <table className="tbl" data-testid="commission-table">
