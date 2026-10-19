@@ -2,6 +2,9 @@ import type { TabKey } from '../state/route.ts';
 import { PageHead, Alert } from '../ui/controls.tsx';
 import { CalendarTab } from './calendar/CalendarTab.tsx';
 import { CharterTab } from './charter/CharterTab.tsx';
+import { ChatTab } from './chat/ChatTab.tsx';
+import { DocsTab } from './docs/DocsTab.tsx';
+import { LogTab } from './log/LogTab.tsx';
 import { DashboardTab } from './dashboard/DashboardTab.tsx';
 import { FinanceTab } from './finance/FinanceTab.tsx';
 import { GanttTab } from './gantt/GanttTab.tsx';
@@ -29,6 +32,12 @@ export function TabView({ tab }: { tab: TabKey }) {
       return <DecisionsTab />;
     case 'cal':
       return <CalendarTab />;
+    case 'docs':
+      return <DocsTab />;
+    case 'chat':
+      return <ChatTab />;
+    case 'log':
+      return <LogTab />;
     case 'gantt':
       return <GanttTab />;
     case 'scurve':

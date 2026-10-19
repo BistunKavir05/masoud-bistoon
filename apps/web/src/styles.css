@@ -412,3 +412,23 @@ button.gn-toggle:hover { background: var(--surface-3); }
 .time-compact { display: inline-flex; flex-direction: column; gap: 2px; }
 .time-compact.invalid input { border-color: var(--bad); }
 .time-compact .err { font-size: 12px; color: var(--bad); }
+
+/* ───── گفتگو، گزارش تغییرات ───── */
+.chat { display: flex; flex-direction: column; gap: 10px; }
+.chat-list { height: min(58vh, 560px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
+.chat-more { text-align: center; }
+.msg { max-width: min(640px, 92%); align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+.msg.mine { align-self: flex-end; background: var(--brand-soft); border-color: transparent; }
+.msg.gone { opacity: 0.65; font-style: italic; }
+.msg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12.5px; }
+.msg-body { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
+.msg-del { margin-inline-start: auto; border: 0; background: none; color: var(--bad); cursor: pointer; font: inherit; font-size: 12px; padding: 0 4px; }
+.msg-del:hover { text-decoration: underline; }
+.chat-form { display: flex; gap: 8px; align-items: flex-end; }
+.chat-form .ta { flex: 1 1 auto; resize: vertical; }
+.cell-val { text-align: right; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+.audit-json { margin: 0; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; font-size: 12px; }
+.audit-kv { margin: 0; display: grid; gap: 4px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.audit-kv > div { display: grid; grid-template-columns: minmax(80px, 30%) 1fr; gap: 8px; }
+.audit-kv dt { color: var(--muted); font-size: 12.5px; }
+.audit-kv dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-size: 13px; }
