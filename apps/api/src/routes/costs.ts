@@ -2,10 +2,11 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
+import { MAX_IMPORT_ROWS, MAX_LEDGER_ROWS } from '@bistoon/core';
 import { actorInfo, diffFields, writeAudit } from '../audit.ts';
 import type { Db } from '../db.ts';
-import { one, withTx } from '../db.ts';
-import { badRequest, notFound, versionConflict } from '../errors.ts';
+import { many, one, withTx } from '../db.ts';
+import { badRequest, conflict, notFound, versionConflict } from '../errors.ts';
 import { actorOf, intParam, projectOf } from '../http/types.ts';
 import { projectAccess, requireCap } from '../middleware.ts';
 import { isoDate, money, posInt, text, version } from '../schemas.ts';
@@ -20,6 +21,7 @@ const fields = {
 };
 const createSchema = z.object(fields).partial({ taskId: true, description: true, document: true }).strict();
 const patchSchema = z.object(fields).partial().extend({ version }).strict();
+const importSchema = z.object({ entries: z.array(z.object(fields).partial({ taskId: true, description: true, document: true }).strict()).min(1).max(MAX_IMPORT_ROWS) }).strict();
 
 export function costsRouter(pool: Pool): Router {
   const r = Router({ mergeParams: true });
@@ -47,6 +49,39 @@ export function costsRouter(pool: Pool): Router {
       return created;
     });
     res.status(201).json({ item });
+  });
+
+  /** ورود دسته‌ای (پس از پیش‌نمایش و تأیید کاربر): همه یا هیچ؛ یک ردیف ممیزی با جمع مبلغ */
+  r.post('/costs/import', base, requireCap('costs.edit'), async (req: Request, res: Response) => {
+    const access = projectOf(req);
+    const { entries } = importSchema.parse(req.body);
+    const out = await withTx(pool, async (tx) => {
+      const taskIds = [...new Set(entries.map((e) => e.taskId).filter((x): x is number => typeof x === 'number'))];
+      if (taskIds.length) {
+        const rows = await many<{ id: number; kind: string }>(tx, 'SELECT id, kind FROM tasks WHERE project_id = $1 AND id = ANY($2::int[])', [access.id, taskIds]);
+        const kinds = new Map(rows.map((r) => [r.id, r.kind]));
+        const missing = taskIds.filter((id) => !kinds.has(id));
+        if (missing.length) throw badRequest(`فعالیت ناموجود: ${missing.join('، ')}`, { missing }, 'UNKNOWN_TASK');
+        const groups = taskIds.filter((id) => kinds.get(id) === 'summary');
+        if (groups.length) throw badRequest('هزینه روی فعالیت خلاصه (گروه) ثبت نمی‌شود.', { taskIds: groups }, 'SUMMARY_TASK');
+      }
+      const have = (await one<{ n: number }>(tx, 'SELECT count(*)::int AS n FROM cost_entries WHERE project_id = $1', [access.id]))!.n;
+      if (have + entries.length > MAX_LEDGER_ROWS) {
+        throw conflict(`دفتر هزینه حداکثر ${MAX_LEDGER_ROWS} ردیف می‌پذیرد؛ ${have} ردیف دارد و ${entries.length} ردیف تازه جا نمی‌شود.`, 'LEDGER_FULL', { have, adding: entries.length, max: MAX_LEDGER_ROWS });
+      }
+      const ids = (await many<{ id: number }>(tx, `SELECT next_seq($1, 'cost') AS id FROM generate_series(1, $2)`, [access.id, entries.length])).map((r) => r.id).sort((a, b) => a - b);
+      const cols = 8;
+      const values: unknown[] = [];
+      const tuples = entries.map((e, i) => {
+        values.push(access.id, ids[i], e.date, e.taskId ?? null, e.description ?? '', e.document ?? '', e.amount, actorOf(req).id);
+        return `(${Array.from({ length: cols }, (_, k) => `$${i * cols + k + 1}`).join(',')})`;
+      });
+      await tx.query(`INSERT INTO cost_entries (project_id, id, entry_date, task_id, description, document, amount, created_by) VALUES ${tuples.join(',')}`, values);
+      const total = entries.reduce((a, e) => a + e.amount, 0);
+      await writeAudit(tx, actorInfo(req), { projectId: access.id, action: 'cost.import', entity: 'cost', newValue: { count: entries.length, total, firstId: ids[0], lastId: ids[ids.length - 1] } });
+      return { created: entries.length, total, firstId: ids[0]!, lastId: ids[ids.length - 1]! };
+    });
+    res.status(201).json(out);
   });
 
   r.patch('/costs/:id', base, requireCap('costs.edit'), async (req: Request, res: Response) => {
