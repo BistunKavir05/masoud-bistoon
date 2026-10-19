@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DASH, dateToInput, faDate, faMoney, faNum, faPct, isSafeUrl, parseDateInput, parseNumber } from '../src/lib/fmt.ts';
+import { DASH, dateToInput, faDate, faMoney, faNum, faPct, faSigned, faSignedPct, isSafeUrl, parseDateInput, parseNumber } from '../src/lib/fmt.ts';
 
 describe('نمایش اعداد و تاریخ', () => {
   it('ارقام فارسی و جداکننده‌ی هزارگان', () => {
@@ -7,6 +7,18 @@ describe('نمایش اعداد و تاریخ', () => {
     expect(faNum(0)).toBe('۰');
     expect(faNum(-1500)).toBe('\u200E−۱٬۵۰۰');
     expect(faNum(12.345, 2)).toBe('۱۲٫۳۵');
+  });
+  it('علامت صریح: مثبت با +، منفی با −، صفرِ گردشده بی‌علامت؛ علامت کنار ارقام می‌ماند', () => {
+    expect(faSigned(1500)).toBe('\u200E+۱٬۵۰۰');
+    expect(faSigned(-1500)).toBe('\u200E−۱٬۵۰۰');
+    expect(faSigned(0)).toBe('۰');
+    expect(faSigned(0.04, 1)).toBe('۰');
+    expect(faSigned(-0.04, 1)).toBe('۰');
+    expect(faSigned(18.84, 1)).toBe('\u200E+۱۸٫۸');
+    expect(faSignedPct(18.84)).toBe('\u200E+۱۸٫۸٪');
+    expect(faSignedPct(-6.25)).toBe('\u200E−۶٫۳٪');
+    expect(faSigned(NaN)).toBe(DASH);
+    expect(faSignedPct(null)).toBe(DASH);
   });
   it('مقدار نامعتبر هرگز NaN یا Infinity نشان نمی‌دهد', () => {
     expect(faNum(NaN)).toBe(DASH);

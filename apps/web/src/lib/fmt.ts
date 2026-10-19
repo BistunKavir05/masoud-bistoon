@@ -18,6 +18,18 @@ export function faNum(n: number | null | undefined, maxFraction = 0): string {
   return body.startsWith('-') ? `\u200E−${body.slice(1)}` : body;
 }
 
+/** عدد با علامت صریح (+ برای مثبت)؛ علامت با LRM کنار ارقام می‌ماند تا در متن راست‌به‌چپ به انتها نیفتد. صفرِ گردشده بی‌علامت است. */
+export function faSigned(n: number | null | undefined, maxFraction = 0): string {
+  if (!isNum(n)) return DASH;
+  const rounded = Number(n.toFixed(maxFraction));
+  if (rounded === 0) return faNum(0);
+  return rounded > 0 ? `\u200E+${faNum(rounded, maxFraction)}` : faNum(rounded, maxFraction);
+}
+
+export function faSignedPct(n: number | null | undefined, maxFraction = 1): string {
+  return isNum(n) ? `${faSigned(n, maxFraction)}٪` : DASH;
+}
+
 export function faPct(n: number | null | undefined, maxFraction = 1): string {
   return isNum(n) ? `${faNum(n, maxFraction)}٪` : DASH;
 }

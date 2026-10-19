@@ -5,6 +5,7 @@ import { DashboardTab } from './dashboard/DashboardTab.tsx';
 import { FinanceTab } from './finance/FinanceTab.tsx';
 import { ChangesTab, DecisionsTab, RisksTab } from './records/RisksTab.tsx';
 import { ResourcesTab } from './resources/ResourcesTab.tsx';
+import { ScurveTab } from './scurve/ScurveTab.tsx';
 import { TasksTab } from './tasks/TasksTab.tsx';
 
 /** نگاشت کلید تب به صفحه‌ی آن */
@@ -24,6 +25,8 @@ export function TabView({ tab }: { tab: TabKey }) {
       return <ChangesTab />;
     case 'dec':
       return <DecisionsTab />;
+    case 'scurve':
+      return <ScurveTab />;
     case 'tasks':
       return <TasksTab />;
     default:

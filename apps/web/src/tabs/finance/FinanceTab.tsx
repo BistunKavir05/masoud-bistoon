@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { actualCost, baselineCost, forecastTaskCost, plannedCost, wbsMap } from '@bistoon/core';
 import type { EacMethod, ProjectDto } from '@bistoon/core';
 import { apiPatch } from '../../api/client.ts';
-import { faInt, faMoney, faNum, faPct, faRatio } from '../../lib/fmt.ts';
+import { faInt, faMoney, faNum, faPct, faRatio, faSigned } from '../../lib/fmt.ts';
 import { reloadProject, useCan, useProjectState } from '../../state/project.ts';
 import { Alert, Badge, Btn, Card, Empty, Kpi, NumberField, PageHead, SelectField, TabBar, TextField, useAction } from '../../ui/controls.tsx';
 import { openDialog } from '../../ui/dialogs.tsx';
@@ -163,8 +163,7 @@ export function FinanceTab() {
                           <td className="n">{faPct(percent)}</td>
                           <td className="n">{faInt(fc)}</td>
                           <td className="n" style={d > Math.max(1, base * 0.001) ? { color: 'var(--bad)', fontWeight: 600 } : undefined}>
-                            {d > 0 ? '+' : ''}
-                            {faInt(d)}
+                            {faSigned(d)}
                           </td>
                         </tr>
                       );
