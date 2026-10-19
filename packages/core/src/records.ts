@@ -50,11 +50,11 @@ export function riskLevel(score: number): RiskLevel {
 const inScale = (v: number): boolean => Number.isInteger(v) && v >= 1 && v <= 5;
 
 /** ریسک‌های باز یا در حال پیگیری با احتمال و اثر معتبر */
-export function openRisks(risks: readonly Risk[]): Risk[] {
+export function openRisks<R extends Risk>(risks: readonly R[]): R[] {
   return risks.filter((r) => r.status !== 'closed' && inScale(r.probability) && inScale(r.impact));
 }
 
-export function topRisks(risks: readonly Risk[], n: number): Risk[] {
+export function topRisks<R extends Risk>(risks: readonly R[], n: number): R[] {
   return openRisks(risks)
     .sort((a, b) => riskScore(b) - riskScore(a) || a.id - b.id)
     .slice(0, n);

@@ -1,6 +1,7 @@
 import type { TabKey } from '../state/route.ts';
 import { PageHead, Alert } from '../ui/controls.tsx';
 import { DashboardTab } from './dashboard/DashboardTab.tsx';
+import { ChangesTab, DecisionsTab, RisksTab } from './records/RisksTab.tsx';
 import { TasksTab } from './tasks/TasksTab.tsx';
 
 /** نگاشت کلید تب به صفحه‌ی آن */
@@ -8,6 +9,12 @@ export function TabView({ tab }: { tab: TabKey }) {
   switch (tab) {
     case 'dash':
       return <DashboardTab />;
+    case 'ri':
+      return <RisksTab />;
+    case 'chg':
+      return <ChangesTab />;
+    case 'dec':
+      return <DecisionsTab />;
     case 'tasks':
       return <TasksTab />;
     default:
