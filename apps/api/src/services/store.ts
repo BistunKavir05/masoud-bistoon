@@ -145,10 +145,9 @@ export async function loadTasks(db: Db, pid: number): Promise<TaskDto[]> {
   }));
 }
 
-/** امضای قطعی محتوای یک فعالیت (به‌همراه جایگاهش) برای تشخیص تغییر */
-function taskSignature(t: Task, position: number): string {
+/** امضای قطعی محتوای یک فعالیت (بدون جایگاه) برای تشخیص تغییر؛ جایگاه جدا و دسته‌ای نوشته می‌شود. */
+function taskSignature(t: Task): string {
   return JSON.stringify([
-    position,
     t.name,
     t.level,
     t.kind,
@@ -178,7 +177,11 @@ export interface TaskSaveResult {
 }
 
 /**
- * فهرست فعالیت‌ها را از وضعیت `before` به `after` می‌برد: فقط ردیف‌های تغییرکرده نوشته می‌شوند و نسخه‌شان بالا می‌رود.
+ * فهرست فعالیت‌ها را از وضعیت `before` به `after` می‌برد. سه دسته تغییر جدا نوشته می‌شود:
+ *  - فعالیت تازه: درج دسته‌ای؛
+ *  - فعالیتِ محتوا‌تغییرکرده: به‌روزرسانی ردیف، بالارفتن نسخه و بازنویسی وابستگی/تخصیص/هزینه‌ی مستقیم؛
+ *  - فعالیتی که فقط جایگاهش جابه‌جا شده (مثلاً با درج ردیف بالاتر): یک به‌روزرسانی دسته‌ای؛ نسخه‌ی آن بالا نمی‌رود
+ *    تا ویرایش هم‌زمانِ دیگران به‌خاطر درجِ ردیفی دورتر ناکام نشود.
  * فعالیت دارای هزینه‌ی ثبت‌شده حذف نمی‌شود (برخلاف برنامه‌ی قبلی که هزینه را بی‌صدا «سربار» می‌کرد).
  */
 export async function saveTasks(db: Db, pid: number, before: readonly Task[], after: readonly Task[], userId: number): Promise<TaskSaveResult> {
@@ -195,6 +198,10 @@ export async function saveTasks(db: Db, pid: number, before: readonly Task[], af
 
   const inserted: number[] = [];
   const updated: number[] = [];
+  const freshRows: unknown[][] = [];
+  const movedIds: number[] = [];
+  const movedPositions: number[] = [];
+  const staleChildren: number[] = [];
   const rewriteChildren: Task[] = [];
   for (let i = 0; i < after.length; i++) {
     const t = after[i]!;
@@ -224,15 +231,10 @@ export async function saveTasks(db: Db, pid: number, before: readonly Task[], af
       isSummary && t.recurrence ? JSON.stringify(t.recurrence) : null,
     ];
     if (!prev) {
-      await db.query(
-        `INSERT INTO tasks (project_id, id, position, name, level, kind, duration, weight, percent_complete, actual_start, actual_finish, work,
-                            start_no_earlier_than, start_no_earlier_source, deadline, level_of_effort, legacy_actual_cost, cost_tracked, updated_by, recurrence)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb)`,
-        params,
-      );
+      freshRows.push(params);
       inserted.push(t.id);
       rewriteChildren.push(t);
-    } else if (taskSignature(prev.t, prev.i + 1) !== taskSignature(t, position)) {
+    } else if (taskSignature(prev.t) !== taskSignature(t)) {
       await db.query(
         `UPDATE tasks SET position = $3, name = $4, level = $5, kind = $6, duration = $7, weight = $8, percent_complete = $9,
                 actual_start = $10, actual_finish = $11, work = $12, start_no_earlier_than = $13, start_no_earlier_source = $14,
@@ -242,28 +244,81 @@ export async function saveTasks(db: Db, pid: number, before: readonly Task[], af
         params,
       );
       updated.push(t.id);
+      staleChildren.push(t.id);
       rewriteChildren.push(t);
+    } else if (prev.i !== i) {
+      movedIds.push(t.id);
+      movedPositions.push(position);
     }
   }
 
-  // وابستگی، تخصیص و هزینه‌ی مستقیمِ فعالیت‌های تغییرکرده را از نو می‌نویسیم. ابتدا همه‌ی ردیف‌ها (بالا) تا کلید خارجی پیش‌نیاز برقرار باشد.
-  for (const t of rewriteChildren) {
-    await db.query('DELETE FROM task_dependencies WHERE project_id = $1 AND task_id = $2', [pid, t.id]);
-    await db.query('DELETE FROM task_assignments WHERE project_id = $1 AND task_id = $2', [pid, t.id]);
-    await db.query('DELETE FROM task_direct_costs WHERE project_id = $1 AND task_id = $2', [pid, t.id]);
+  // درج دسته‌ای فعالیت‌های تازه (هر دسته ≤ ۴۰۰ ردیف؛ ۲۰ پارامتر در ردیف)
+  const COLS = 20;
+  for (let from = 0; from < freshRows.length; from += 400) {
+    const chunk = freshRows.slice(from, from + 400);
+    const values: unknown[] = [];
+    const tuples = chunk.map((row, r) => {
+      values.push(...row);
+      const ph = Array.from({ length: COLS }, (_, k) => `$${r * COLS + k + 1}${k === COLS - 1 ? '::jsonb' : ''}`);
+      return `(${ph.join(',')})`;
+    });
+    await db.query(
+      `INSERT INTO tasks (project_id, id, position, name, level, kind, duration, weight, percent_complete, actual_start, actual_finish, work,
+                          start_no_earlier_than, start_no_earlier_source, deadline, level_of_effort, legacy_actual_cost, cost_tracked, updated_by, recurrence)
+       VALUES ${tuples.join(',')}`,
+      values,
+    );
   }
+
+  // جابه‌جایی صرفِ جایگاه: یک دستور برای همه (یکتایی جایگاه تا پایان تراکنش به تعویق افتاده است)
+  if (movedIds.length) {
+    await db.query(
+      'UPDATE tasks t SET position = v.pos FROM unnest($2::int[], $3::int[]) AS v(id, pos) WHERE t.project_id = $1 AND t.id = v.id',
+      [pid, movedIds, movedPositions],
+    );
+  }
+
+  // وابستگی، تخصیص و هزینه‌ی مستقیمِ فعالیت‌های محتوا‌تغییرکرده را از نو می‌نویسیم. همه‌ی ردیف‌ها (بالا) پیش از آن نوشته شده‌اند تا کلید خارجی پیش‌نیاز برقرار باشد.
+  if (staleChildren.length) {
+    await db.query('DELETE FROM task_dependencies WHERE project_id = $1 AND task_id = ANY($2::int[])', [pid, staleChildren]);
+    await db.query('DELETE FROM task_assignments WHERE project_id = $1 AND task_id = ANY($2::int[])', [pid, staleChildren]);
+    await db.query('DELETE FROM task_direct_costs WHERE project_id = $1 AND task_id = ANY($2::int[])', [pid, staleChildren]);
+  }
+  const dep = { task: [] as number[], pred: [] as number[], type: [] as string[], lag: [] as number[] };
+  const asg = { task: [] as number[], resource: [] as number[], units: [] as number[] };
+  const dc = { task: [] as number[], line: [] as number[], name: [] as string[], amount: [] as number[] };
   for (const t of rewriteChildren) {
     for (const d of [...t.dependencies].sort((a, b) => a.predecessorId - b.predecessorId)) {
-      await db.query('INSERT INTO task_dependencies (project_id, task_id, predecessor_id, dep_type, lag) VALUES ($1,$2,$3,$4,$5)', [pid, t.id, d.predecessorId, d.type, d.lag]);
+      dep.task.push(t.id);
+      dep.pred.push(d.predecessorId);
+      dep.type.push(d.type);
+      dep.lag.push(d.lag);
     }
     if (t.kind === 'summary') continue;
     for (const a of [...t.assignments].sort((x, y) => x.resourceId - y.resourceId)) {
-      await db.query('INSERT INTO task_assignments (project_id, task_id, resource_id, units) VALUES ($1,$2,$3,$4)', [pid, t.id, a.resourceId, a.units]);
+      asg.task.push(t.id);
+      asg.resource.push(a.resourceId);
+      asg.units.push(a.units);
     }
     let line = 1;
     for (const c of t.directCosts) {
-      await db.query('INSERT INTO task_direct_costs (project_id, task_id, line_no, name, amount) VALUES ($1,$2,$3,$4,$5)', [pid, t.id, line++, c.name, c.amount]);
+      dc.task.push(t.id);
+      dc.line.push(line++);
+      dc.name.push(c.name);
+      dc.amount.push(c.amount);
     }
+  }
+  if (dep.task.length) {
+    await db.query(
+      'INSERT INTO task_dependencies (project_id, task_id, predecessor_id, dep_type, lag) SELECT $1, * FROM unnest($2::int[], $3::int[], $4::text[], $5::int[])',
+      [pid, dep.task, dep.pred, dep.type, dep.lag],
+    );
+  }
+  if (asg.task.length) {
+    await db.query('INSERT INTO task_assignments (project_id, task_id, resource_id, units) SELECT $1, * FROM unnest($2::int[], $3::int[], $4::numeric[])', [pid, asg.task, asg.resource, asg.units]);
+  }
+  if (dc.task.length) {
+    await db.query('INSERT INTO task_direct_costs (project_id, task_id, line_no, name, amount) SELECT $1, * FROM unnest($2::int[], $3::smallint[], $4::text[], $5::numeric[])', [pid, dc.task, dc.line, dc.name, dc.amount]);
   }
   return { inserted, updated, deleted };
 }
