@@ -212,6 +212,59 @@ describe('مسیر بحرانی و شناوری', () => {
   });
 });
 
+describe('LoE و پیش‌نیازها (D-029)', () => {
+  it('LoE بلند با پیوند SS از اولین فعالیت، شناوری و بحرانی بودن پیش‌نیاز را عوض نمی‌کند', () => {
+    // مسیر اصلی ۱→۲ (۱۰ روز) و فعالیت مستقل ۳ با شناوری؛ «نظارت» ۱۵ روزه با SS از فعالیت ۳ (که شناور است)
+    const base = [
+      task({ id: 1, name: 'A', duration: 5 }),
+      task({ id: 2, name: 'B', duration: 5, dependencies: [dep(1)] }),
+      task({ id: 3, name: 'C', duration: 2 }),
+    ];
+    const without = ok(computeSchedule(input(base)));
+    const withLoe = ok(computeSchedule(input([...base, task({ id: 4, name: 'نظارت', duration: 15, levelOfEffort: true, dependencies: [dep(3, 'SS')] })])));
+    expect(withLoe.projectFinish).toBe(without.projectFinish); // LoE پایان پروژه را تعیین نمی‌کند
+    for (const id of [1, 2, 3]) {
+      expect(row(withLoe, id).totalFloat).toBe(row(without, id).totalFloat);
+      expect(row(withLoe, id).critical).toBe(row(without, id).critical);
+    }
+    expect(row(withLoe, 3).critical).toBe(false);
+    expect(row(withLoe, 4).critical).toBe(false);
+  });
+
+  it('LoE که فعالیتِ بحرانی به آن وابسته است، قید را به پیش‌نیازش می‌رساند (شناوری بیش‌ازحد نمی‌گیرد)', () => {
+    // ۲(۵ روز) ← «نظارت»(LoE) ← ۴(۱۰ روز): مسیر ۲→LoE→۴ از فعالیت ۱ (۱۰ روز) بلندتر و بحرانی است؛ LoE خودش بحرانی حساب نمی‌شود
+    const t = [
+      task({ id: 1, name: 'مستقل', duration: 10 }),
+      task({ id: 2, name: 'پیش‌نیاز', duration: 5 }),
+      task({ id: 3, name: 'نظارت', duration: 1, levelOfEffort: true, dependencies: [dep(2)] }),
+      task({ id: 4, name: 'بحرانی', duration: 10, dependencies: [dep(3)] }),
+    ];
+    const s = ok(computeSchedule(input(t)));
+    expect(s.projectFinish).toBe(16);
+    expect(row(s, 2).totalFloat).toBe(0);
+    expect(row(s, 2).critical).toBe(true);
+    expect(row(s, 4).critical).toBe(true);
+    expect(row(s, 3).critical).toBe(false);
+    expect(row(s, 1).totalFloat).toBe(6);
+    // به‌تعویق‌انداختن ۱ روزه‌ی فعالیت ۲ (فراتر از شناوری ۰) باید پایان پروژه را عقب ببرد
+    const later = ok(computeSchedule(input(t.map((x) => (x.id === 2 ? { ...x, startNoEarlierThan: s.axis.dateAt(row(s, 2).earlyStart + 1), startNoEarlierSource: 'manual' as const } : x)))));
+    expect(later.projectFinish).toBe(17);
+  });
+
+  it('LoE بدون پسین واقعی پیش‌نیازش را محدود نمی‌کند، حتی اگر داخل یک فاز باشد', () => {
+    const t = [
+      task({ id: 1, name: 'فاز', kind: 'summary', level: 1 }),
+      task({ id: 2, name: 'الف', level: 2, duration: 3 }),
+      task({ id: 3, name: 'نظارت', level: 2, duration: 20, levelOfEffort: true, dependencies: [dep(2, 'SS')] }),
+      task({ id: 4, name: 'ب', level: 1, duration: 10 }),
+    ];
+    const s = ok(computeSchedule(input(t)));
+    expect(s.projectFinish).toBe(10);
+    expect(row(s, 2).totalFloat).toBe(7);
+    expect(row(s, 2).critical).toBe(false);
+  });
+});
+
 describe('مدت از کار و تخصیص', () => {
   it('گردکردن رو به بالا با تحمل عددی: ۳ نفر-روز با ۳۰٪ = ۱۰ روز (نه ۱۱)', () => {
     const t = [task({ id: 1, duration: 99, work: 3, assignments: [{ resourceId: 1, units: 30 }] })];

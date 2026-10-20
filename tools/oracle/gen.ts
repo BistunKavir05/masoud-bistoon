@@ -125,7 +125,11 @@ export function genLegacyProject(seed: number, opts: GenOptions = {}): J {
     } else if (chance(0.05)) t.p = ri(1, 99);
     if (chance(0.08) && !t.as) t.snet = dayAt(ri(0, 300));
     if (chance(0.12)) t.dl = dayAt(ri(0, 300));
-    if (chance(0.05)) t.loe = true;
+    // D-029: در موتور جدید، LoE سقف پایان پروژه ندارد (برنامه‌ی مرجع دارد)؛ برای مقایسه‌ی منصفانه LoE پیش‌نیاز ندارد.
+    if (chance(0.05)) {
+      t.loe = true;
+      t.preds = '';
+    }
     if (chance(0.3)) {
       const m = ri(1, 2);
       t.res = Array.from({ length: m }, () => `${chance(0.04) ? 'GHOST' : pick(resNames)}:${pick([25, 50, 100, 100, 150])}`).join(chance(0.2) ? '،' : ',');

@@ -334,7 +334,7 @@ function Details({ row, rows }: { row: TaskRow; rows: readonly TaskRow[] }) {
         </div>
         <div>
           <dt>شناوری کل</dt>
-          <dd>{t.kind === 'summary' ? '—' : (s?.percent ?? 0) >= 100 ? 'تمام‌شده' : s?.critical ? `${faInt(s.totalFloat)} روز کاری (بحرانی)` : `${faInt(s?.totalFloat ?? 0)} روز کاری`}</dd>
+          <dd>{t.kind === 'summary' || t.levelOfEffort ? '—' : (s?.percent ?? 0) >= 100 ? 'تمام‌شده' : s?.critical ? `${faInt(s.totalFloat)} روز کاری (بحرانی)` : `${faInt(s?.totalFloat ?? 0)} روز کاری`}</dd>
         </div>
         <div>
           <dt>نسبت به خط مبنا</dt>

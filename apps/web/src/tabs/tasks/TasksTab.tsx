@@ -349,7 +349,7 @@ function Row({ r, selected, collapsed, onToggle, onSelect, canEdit, canProgress,
       {showCost ? <td className="n">{summary ? DASH : faNum(r.plannedCost)}</td> : null}
       <td className="num">{s ? (s.startDate ? faDate(s.startDate) : 'خارج از افق') : DASH}</td>
       <td className="num">{s ? (s.finishDate ? faDate(s.finishDate) : 'خارج از افق') : DASH}</td>
-      <td className="n">{summary || !s ? DASH : <span style={s.critical ? { color: 'var(--bad)', fontWeight: 700 } : undefined}>{faNum(s.totalFloat)}</span>}</td>
+      <td className="n">{summary || !s || t.levelOfEffort ? DASH : <span style={s.critical ? { color: 'var(--bad)', fontWeight: 700 } : undefined}>{faNum(s.totalFloat)}</span>}</td>
     </tr>
   );
 }

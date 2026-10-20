@@ -8,7 +8,8 @@
  * - فعالیت خلاصه از فرزندانش مشتق می‌شود (شروع = کمینه، پایان = بیشینه) و خودش پیش‌نیاز و تاریخ واقعی ندارد.
  * - فعالیت شروع‌شده (تاریخ واقعی دارد) روی اندیس واقعی «قفل» می‌شود و پیش‌نیازها آن را جابه‌جا نمی‌کنند.
  * - فعالیت شروع‌نشده هرگز پیش از تاریخ وضعیت برنامه‌ریزی نمی‌شود.
- * - Level-of-Effort در پایان پروژه (PF) و بحرانی بودن شرکت نمی‌کند.
+ * - Level-of-Effort در پایان پروژه (PF) و بحرانی بودن شرکت نمی‌کند؛ در برگشت هم سقف PF ندارد و فقط قیدِ پسین‌های واقعی‌اش
+ *   (فعالیت‌های وابسته به آن) را به پیش‌نیازهایش می‌رساند (D-029).
  */
 import type { IsoDate } from './date.ts';
 import { DayAxis, DEFAULT_HORIZON_DAYS, buildWorkingDays } from './calendar.ts';
@@ -260,35 +261,44 @@ export function computeSchedule(input: ScheduleInput): ScheduleResult {
   }
 
   // برگشت
+  // «دیرترین پایانِ انتشاری» (LFp): قیدی که این گره از سوی پسین‌هایش به پیش‌نیازهایش می‌رساند. فعالیت عادی سقف «پایان پروژه» دارد؛
+  // اما LoE پایان پروژه را تعیین نمی‌کند، پس سقف پایان پروژه ندارد و فقط قیدِ پسین‌های واقعی‌اش (و ضرب‌الاجل) را عبور می‌دهد
+  // (وگرنه پیش‌نیازِ یک LoE بلند، شناوری منفی و پرچم «بحرانی»ِ کاذب می‌گیرد؛ و برعکس پیش‌نیازِ LoEای که فعالیتِ بحرانی به آن
+  // وابسته است، شناوریِ بیش‌ازحد می‌گیرد). خلاصه هم سقف خودش را ندارد: سقف از برگ‌هایش می‌آید. اختلاف عمدی با مرجع: D-029.
+  const LFp = new Array<number>(n).fill(Infinity);
   for (let h = order.length - 1; h >= 0; h -= 1) {
     const i = order[h] as number;
     const t = T[i] as Task;
-    let lf = PF;
+    let lf = t.kind === 'summary' || t.levelOfEffort ? Infinity : PF;
     if (t.deadline && t.kind !== 'summary') lf = Math.min(lf, axis.after(t.deadline));
     for (const e of succ[i] as Edge[]) {
       const b = T[e.to] as Task;
       if (b.kind !== 'summary' && hasActual(b)) continue;
+      const bLf = LFp[e.to] as number;
+      const bLs = bLf - (D[e.to] as number);
       let v: number;
       switch (e.type) {
         case 'SUM':
-          v = LF[e.to] as number;
+          v = bLf;
           break;
         case 'FS':
-          v = (LS[e.to] as number) - e.lag;
+          v = bLs - e.lag;
           break;
         case 'SS':
-          v = (LS[e.to] as number) - e.lag + (D[i] as number);
+          v = bLs - e.lag + (D[i] as number);
           break;
         case 'FF':
-          v = (LF[e.to] as number) - e.lag;
+          v = bLf - e.lag;
           break;
         default:
-          v = (LF[e.to] as number) - e.lag + (D[i] as number);
+          v = bLf - e.lag + (D[i] as number);
       }
       if (v < lf) lf = v;
     }
-    LF[i] = lf;
-    LS[i] = lf - (D[i] as number);
+    LFp[i] = lf;
+    // مقدار نمایشی: همیشه با سقف پایان پروژه (همان چیزی که برنامه‌ی مرجع نشان می‌دهد)
+    LF[i] = Math.min(lf, PF);
+    LS[i] = (LF[i] as number) - (D[i] as number);
     TF[i] = (LS[i] as number) - (ES[i] as number);
     CR[i] = (TF[i] as number) <= 0 && (PP[i] as number) < 100 && !t.levelOfEffort;
   }
