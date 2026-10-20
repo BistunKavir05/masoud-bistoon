@@ -55,8 +55,10 @@ out="$(login)"
 step "رابط کاربری و مسیر SPA"
 curl -fsS "$URL/" | grep -q '<div id="root"' || { echo "index.html سرو نشد" >&2; exit 1; }
 curl -fsS "$URL/p/1/tasks" | grep -q '<div id="root"' || { echo "بازگشت به index برای مسیرهای SPA کار نکرد" >&2; exit 1; }
+# بدون ورود، مسیرهای API ابتدا ۴۰۱ می‌دهند (وجود مسیر را لو نمی‌دهند)؛ مهم این است که به index.html SPA برنگردند.
 code="$(curl -s -o /dev/null -w '%{http_code}' "$URL/api/nope")"
-[[ "$code" == 404 ]] || { echo "مسیر ناموجود API باید ۴۰۴ بدهد، نه $code" >&2; exit 1; }
+[[ "$code" == 401 || "$code" == 404 ]] || { echo "مسیر ناموجود API باید ۴۰۱ یا ۴۰۴ بدهد، نه $code" >&2; exit 1; }
+curl -s "$URL/api/nope" | grep -q '<div id="root"' && { echo "مسیر API به index.html بازگشت" >&2; exit 1; } || true
 
 step "هدرهای امنیتی"
 hdr="$(curl -fsSI "$URL/")"
