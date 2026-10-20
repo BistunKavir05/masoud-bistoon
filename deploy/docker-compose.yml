@@ -1,0 +1,43 @@
+# بیستون: پایگاه‌داده‌ی PostgreSQL + برنامه (API و رابط کاربری).
+# اجرا (از همین پوشه):  cp .env.example .env  →  مقادیر را پر کنید  →  docker compose up -d --build
+name: bistoon
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bistoon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD را در فایل .env تنظیم کنید}
+      POSTGRES_DB: ${POSTGRES_DB:-bistoon}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # پایگاه‌داده عمداً به بیرون از شبکه‌ی Docker منتشر نمی‌شود.
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: bistoon:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-bistoon}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bistoon}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
+      BODY_LIMIT: ${BODY_LIMIT:-16mb}
+    ports:
+      # پیش‌فرض فقط روی خود سرور؛ برای دسترسی مستقیم از شبکه BISTOON_BIND=0.0.0.0 بگذارید (یا پشت nginx بگذارید).
+      - "${BISTOON_BIND:-127.0.0.1}:${BISTOON_PORT:-3000}:3000"
+
+volumes:
+  pgdata:

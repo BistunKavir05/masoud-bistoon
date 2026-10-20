@@ -1,0 +1,32 @@
+# /etc/systemd/system/bistoon.service  (نصب بدون Docker)
+[Unit]
+Description=Bistoon project control system
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=bistoon
+Group=bistoon
+WorkingDirectory=/opt/bistoon/apps/api
+# DATABASE_URL, PORT, HOST, COOKIE_SECURE, TRUST_PROXY, WEB_DIST, ...
+EnvironmentFile=/etc/bistoon/bistoon.env
+Environment=NODE_ENV=production NODE_OPTIONS=--disable-warning=ExperimentalWarning
+ExecStart=/usr/bin/node src/server.ts
+Restart=on-failure
+RestartSec=3
+# خاموشی مؤدبانه (برنامه SIGTERM را می‌گیرد و تا ۱۰ ثانیه صبر می‌کند)
+TimeoutStopSec=15
+
+# سخت‌سازی
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/bistoon
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

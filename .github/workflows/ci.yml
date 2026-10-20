@@ -158,10 +158,30 @@ jobs:
           name: web
           path: ci-out/web
 
+  deploy:
+    name: استقرار Docker (ساخت تصویر + آزمون دود + پشتیبان/بازیابی)
+    runs-on: ubuntu-latest
+    needs: core
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: اعتبار فایل compose و اسکریپت‌ها
+        run: |
+          mkdir -p ci-out/deploy
+          POSTGRES_PASSWORD=x docker compose -f deploy/docker-compose.yml config --quiet 2>&1 | tee ci-out/deploy/compose-config.log
+          for f in deploy/scripts/*.sh; do bash -n "$f"; done
+      - name: آزمون دود (ساخت تصویر، بالاآمدن، ورود، پشتیبان، بازیابی)
+        run: deploy/scripts/smoke-docker.sh 2>&1 | tee ci-out/deploy/smoke.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deploy
+          path: ci-out/deploy
+
   publish-logs:
     name: انتشار گزارش‌ها در شاخه‌ی ci-logs
     runs-on: ubuntu-latest
-    needs: [core, oracle, api, web]
+    needs: [core, oracle, api, web, deploy]
     if: always() && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4

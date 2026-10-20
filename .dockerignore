@@ -1,0 +1,17 @@
+.git
+.github
+**/node_modules
+**/dist
+**/coverage
+**/*.log
+.env
+.env.*
+!.env.example
+reference
+docs
+tools
+apps/web/e2e
+apps/api/test
+apps/web/test
+packages/core/test
+deploy/backups
