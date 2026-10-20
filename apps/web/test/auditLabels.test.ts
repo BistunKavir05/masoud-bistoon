@@ -18,6 +18,10 @@ describe('برچسب‌های گزارش تغییرات', () => {
   it('فیلد و مقدار', () => {
     expect(fieldLabel('percentComplete')).toBe('درصد پیشرفت');
     expect(fieldLabel('unknownField')).toBe('unknownField');
+    // فیلدهای منشور و قرارداد برچسب فارسی دارند (نه نام انگلیسی خام)
+    expect(fieldLabel('client')).toBe('کارفرما');
+    expect(fieldLabel('collectedTotal')).toBe('جمع وصول‌شده');
+    expect(fieldLabel('salesCommissionPercent')).toBe('درصد پورسانت فروش');
     expect(formatAuditValue(null)).toBe('—');
     expect(formatAuditValue('')).toBe('—');
     expect(formatAuditValue(true)).toBe('بله');

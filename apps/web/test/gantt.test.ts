@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { analyzeProject, buildBaseline, defaultCalendar, plannedCost } from '@bistoon/core';
 import type { Analysis, ProjectModel, Task, TaskDto } from '@bistoon/core';
 import { buildRows } from '../src/tabs/tasks/rows.ts';
-import { PX_PER_DAY, ROW_H, barGeom, buildLinks, linkPath, rowCenter, timeBands } from '../src/tabs/gantt/layout.ts';
+import { PX_PER_DAY, ROW_H, barGeom, buildLinks, flipX, linkPath, rowCenter, timeBands } from '../src/tabs/gantt/layout.ts';
 
 const mk = (p: Partial<Task> & { id: number }): TaskDto => {
   const kind = p.kind ?? 'task';
@@ -146,3 +146,37 @@ describe('مسیر خط ارتباط', () => {
     expect(linkPath('SF', a, b).endsWith(`H260`)).toBe(true);
   });
 });
+
+describe('جهت نمایش: راست‌به‌چپ', () => {
+  it('flipX: نخستین بازه کنار لبه‌ی راست می‌افتد و لبه‌ی چپ بازه محاسبه می‌شود', () => {
+    expect(flipX(1000, 0, 100)).toBe(900); // بازه‌ی [0,100] منطقی ← لبه‌ی چپ 900 و لبه‌ی راست 1000
+    expect(flipX(1000, 250)).toBe(750);
+    // دو بازه‌ی پشت‌سرهم: دومی (بعدی در زمان) سمت چپ اولی است
+    expect(flipX(1000, 100, 50)).toBeLessThan(flipX(1000, 0, 100));
+  });
+  it('مسیر خط ارتباط قرینه می‌شود: همان y و همان ترتیب فرمان‌ها، فقط x → کل − x', () => {
+    const a = { start: 100, end: 160, y: rowCenter(0) };
+    const b = { start: 200, end: 260, y: rowCenter(1) };
+    expect(linkPath('FS', a, b, 1000)).toBe(`M840,${rowCenter(0)}H833V${rowCenter(1)}H800`);
+    for (const t of ['FS', 'SS', 'FF', 'SF'] as const) {
+      const plain = linkPath(t, a, b);
+      const flipped = linkPath(t, a, b, 1000);
+      // هر عددِ پس از M/H/V-ی افقی قرینه شده است
+      const xs = (d: string) => [...d.matchAll(/[MH](-?[\d.]+)/g)].map((m) => Number(m[1]));
+      expect(xs(flipped)).toEqual(xs(plain).map((x) => 1000 - x));
+      const ys = (d: string) => [...d.matchAll(/[,V](-?[\d.]+)/g)].map((m) => Number(m[1]));
+      expect(ys(flipped)).toEqual(ys(plain));
+    }
+  });
+  it('buildLinks با عرض کل، مسیر قرینه می‌دهد', () => {
+    const m = model([mk({ id: 1, name: 'الف', duration: 4 }), mk({ id: 2, name: 'ب', duration: 6, dependencies: [{ predecessorId: 1, type: 'FS', lag: 0 }] })]);
+    const a = analyze(m);
+    const rows = buildRows(m.tasks as TaskDto[], a, m.resources, null);
+    const geoms = new Map(rows.map((r) => [r.t.id, barGeom(r, null, a.schedule.axis, 20)!]));
+    const [plain] = buildLinks(rows, geoms);
+    const [flipped] = buildLinks(rows, geoms, 500);
+    expect(plain!.d.startsWith('M80,')).toBe(true);
+    expect(flipped!.d.startsWith('M420,')).toBe(true);
+  });
+});
+

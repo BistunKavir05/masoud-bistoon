@@ -344,10 +344,10 @@ table { border-collapse: collapse; }
 .gantt { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
 .gantt-scroll { overflow: auto; max-height: min(74vh, 960px); direction: ltr; position: relative; }
 .gantt-inner { display: flex; align-items: flex-start; width: max-content; min-width: 100%; }
-.gantt-chart { flex: 0 0 auto; position: relative; }
+.gantt-chart { flex: 0 0 auto; position: relative; margin-left: auto; } /* راست‌به‌چپ: نمودار کنار ستون نام‌ها در راست می‌نشیند */
 .gantt-chart svg { display: block; }
 .gantt-head { position: sticky; top: 0; z-index: 2; background: var(--surface-2); }
-.gantt-names { flex: 0 0 300px; width: 300px; position: sticky; right: 0; z-index: 4; background: var(--surface); direction: rtl; border-inline-end: 1px solid var(--line-strong); box-shadow: -6px 0 8px -8px rgba(0, 0, 0, 0.25); margin-left: auto; }
+.gantt-names { flex: 0 0 300px; width: 300px; position: sticky; right: 0; z-index: 4; background: var(--surface); direction: rtl; border-inline-end: 1px solid var(--line-strong); box-shadow: -6px 0 8px -8px rgba(0, 0, 0, 0.25); }
 .gn-head { position: sticky; top: 0; z-index: 3; height: 46px; display: flex; align-items: flex-end; padding: 0 12px 8px; font-weight: 700; font-size: 12.5px; color: var(--ink-2); background: var(--surface-2); border-bottom: 1px solid var(--line-strong); }
 .gn-row { display: flex; align-items: center; gap: 2px; border-bottom: 1px solid var(--line); font-size: 13px; padding-inline-end: 6px; }
 .gn-row.sum { font-weight: 700; background: var(--surface-2); }

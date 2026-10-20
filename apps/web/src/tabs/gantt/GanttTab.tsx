@@ -8,7 +8,7 @@ import { Alert, Btn, Card, Empty, PageHead, Segmented } from '../../ui/controls.
 import { Icon } from '../../ui/icons.tsx';
 import { buildRows, visibleRows } from '../tasks/rows.ts';
 import type { TaskRow } from '../tasks/rows.ts';
-import { BAR_H, BASE_H, BASE_Y, HEADER_H, PX_PER_DAY, ROW_H, ZOOM_LABELS, barGeom, barTop, buildLinks, rowCenter, timeBands } from './layout.ts';
+import { BAR_H, BASE_H, BASE_Y, HEADER_H, PX_PER_DAY, ROW_H, ZOOM_LABELS, barGeom, barTop, buildLinks, flipX, rowCenter, timeBands } from './layout.ts';
 import type { BarGeom, Zoom } from './layout.ts';
 
 const ZOOMS: Zoom[] = ['day', 'week', 'month'];
@@ -40,14 +40,24 @@ export function GanttTab() {
     }
     return m;
   }, [shown, a, model, px]);
-  const links = useMemo(() => buildLinks(shown, geoms), [shown, geoms]);
+  const chartW = a ? a.scurve.length * px : 0;
+  const links = useMemo(() => buildLinks(shown, geoms, chartW), [shown, geoms, chartW]);
   const bands = useMemo(() => (a ? timeBands(a.schedule.axis, a.scurve.length, zoom) : { months: [], ticks: [] }), [a, zoom]);
 
   const statusX = a ? (a.schedule.statusIndex + 1) * px : 0;
+  /**
+   * نمودار راست‌به‌چپ است: نخستین روز کنار ستون نام‌ها در راست و روزهای بعد به‌سمت چپ. ظرف اسکرول چپ‌به‌راست می‌ماند
+   * (scrollLeft همیشه ≥ ۰)؛ تاریخ وضعیت را کمی بیشتر از میانه‌ی بخش نمایان قرار می‌دهیم تا آینده در چپ جا داشته باشد.
+   */
   const goStatus = (smooth = true): void => {
     const el = scroller.current;
-    if (!el) return;
-    el.scrollTo({ left: Math.max(0, statusX - el.clientWidth / 3), behavior: smooth ? 'smooth' : 'auto' });
+    if (!el || !a) return;
+    const namesW = el.querySelector<HTMLElement>('.gantt-names')?.offsetWidth ?? 0;
+    const total = a.scurve.length * px;
+    const chartLeft = el.scrollWidth - namesW - total;
+    const visible = Math.max(0, el.clientWidth - namesW);
+    const target = chartLeft + flipX(total, statusX) - visible * 0.6;
+    el.scrollTo({ left: Math.max(0, Math.min(target, el.scrollWidth - el.clientWidth)), behavior: smooth ? 'smooth' : 'auto' });
   };
   // ورود به صفحه یا تغییر بزرگ‌نمایی: تاریخ وضعیت در دید باشد
   useEffect(() => goStatus(false), [zoom, a?.schedule.statusIndex]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -62,9 +72,10 @@ export function GanttTab() {
   }
 
   const axis = a.schedule.axis;
-  const width = a.scurve.length * px;
+  const width = chartW;
   const bodyH = Math.max(ROW_H, shown.length * ROW_H);
-  const endX = model.contractEnd ? axis.after(model.contractEnd) * px : null;
+  const endX = model.contractEnd ? flipX(width, axis.after(model.contractEnd) * px) : null;
+  const sX = flipX(width, statusX);
   const sel = selected !== null ? rows.find((r) => r.t.id === selected) ?? null : null;
   const groupIds = rows.filter((r) => r.hasChildren).map((r) => r.t.id);
   const toggle = (id: number): void =>
@@ -129,9 +140,9 @@ export function GanttTab() {
                   <svg className="gantt-head" width={width} height={HEADER_H} role="presentation" aria-hidden="true">
                     {bands.months.map((m, i) => (
                       <g key={m.x}>
-                        <rect className={`gh-month${i % 2 ? ' alt' : ''}`} x={m.x} y={0} width={m.w} height={HEADER_H / 2} />
+                        <rect className={`gh-month${i % 2 ? ' alt' : ''}`} x={flipX(width, m.x, m.w)} y={0} width={m.w} height={HEADER_H / 2} />
                         {m.label ? (
-                          <text className="gh-text" x={m.x + m.w / 2} y={HEADER_H / 4 + 4} textAnchor="middle">
+                          <text className="gh-text" x={flipX(width, m.x, m.w) + m.w / 2} y={HEADER_H / 4 + 4} textAnchor="middle">
                             {m.label}
                           </text>
                         ) : null}
@@ -139,14 +150,14 @@ export function GanttTab() {
                     ))}
                     {bands.ticks.map((t) => (
                       <g key={t.x}>
-                        <line className="gh-tick" x1={t.x} x2={t.x} y1={HEADER_H / 2} y2={HEADER_H} />
-                        <text className="gh-text sm" x={t.x + 3} y={HEADER_H - 8}>
+                        <line className="gh-tick" x1={flipX(width, t.x)} x2={flipX(width, t.x)} y1={HEADER_H / 2} y2={HEADER_H} />
+                        <text className="gh-text sm" x={flipX(width, t.x) - 3} y={HEADER_H - 8} textAnchor="end">
                           {t.label}
                         </text>
                       </g>
                     ))}
-                    <line className="g-status" x1={statusX} x2={statusX} y1={0} y2={HEADER_H} />
-                    <path className="g-status-flag" d={`M${statusX - 5},${HEADER_H - 7}h10l-5,7z`} />
+                    <line className="g-status" x1={sX} x2={sX} y1={0} y2={HEADER_H} />
+                    <path className="g-status-flag" d={`M${sX - 5},${HEADER_H - 7}h10l-5,7z`} />
                     {endX !== null ? <line className="g-end" x1={endX} x2={endX} y1={0} y2={HEADER_H} /> : null}
                     <line className="gh-base" x1={0} x2={width} y1={HEADER_H - 0.5} y2={HEADER_H - 0.5} />
                   </svg>
@@ -172,10 +183,10 @@ export function GanttTab() {
                       <rect key={r.t.id} className={`g-row${i % 2 ? ' alt' : ''}${selected === r.t.id ? ' sel' : ''}`} x={0} y={HEADER_H + i * ROW_H} width={width} height={ROW_H} />
                     ))}
                     {bands.months.map((m) => (
-                      <line key={m.x} className="g-grid" x1={m.x} x2={m.x} y1={HEADER_H} y2={HEADER_H + bodyH} />
+                      <line key={m.x} className="g-grid" x1={flipX(width, m.x)} x2={flipX(width, m.x)} y1={HEADER_H} y2={HEADER_H + bodyH} />
                     ))}
                     {endX !== null ? <line className="g-end" x1={endX} x2={endX} y1={HEADER_H} y2={HEADER_H + bodyH} /> : null}
-                    <line className="g-status" x1={statusX} x2={statusX} y1={HEADER_H} y2={HEADER_H + bodyH} />
+                    <line className="g-status" x1={sX} x2={sX} y1={HEADER_H} y2={HEADER_H + bodyH} />
 
                     {showBase && hasBaseline
                       ? shown.map((r, i) => {
@@ -183,9 +194,9 @@ export function GanttTab() {
                           if (!g?.base) return null;
                           const y = HEADER_H + i * ROW_H;
                           return g.base.zero ? (
-                            <path key={r.t.id} className="g-base" d={`M${g.base.x},${y + BASE_Y + BASE_H / 2 - 4}l4,4l-4,4l-4,-4z`} />
+                            <path key={r.t.id} className="g-base" d={`M${flipX(width, g.base.x)},${y + BASE_Y + BASE_H / 2 - 4}l4,4l-4,4l-4,-4z`} />
                           ) : (
-                            <rect key={r.t.id} className="g-base" x={g.base.x} y={y + BASE_Y} width={g.base.w} height={BASE_H} rx={1.5} />
+                            <rect key={r.t.id} className="g-base" x={flipX(width, g.base.x, g.base.w)} y={y + BASE_Y} width={g.base.w} height={BASE_H} rx={1.5} />
                           );
                         })
                       : null}
@@ -199,7 +210,7 @@ export function GanttTab() {
                     {shown.map((r, i) => {
                       const g = geoms.get(r.t.id);
                       if (!g) return null;
-                      return <Bar key={r.t.id} r={r} g={g} i={i} selected={selected === r.t.id} />;
+                      return <Bar key={r.t.id} r={r} g={g} i={i} total={width} selected={selected === r.t.id} />;
                     })}
                   </svg>
                 </div>
@@ -239,7 +250,7 @@ export function GanttTab() {
           </section>
         )}
 
-        {sel ? <Details row={sel} rows={rows} /> : shown.length > 0 ? <p className="small muted" style={{ margin: 0 }}>برای دیدن جزئیات و برجسته‌شدن ارتباط‌ها، روی یک فعالیت (نام یا میله) کلیک کنید. زمان در محور افقی بر حسب روز کاری است (جمعه و تعطیلات حذف می‌شوند).</p> : null}
+        {sel ? <Details row={sel} rows={rows} /> : shown.length > 0 ? <p className="small muted" style={{ margin: 0 }}>برای دیدن جزئیات و برجسته‌شدن ارتباط‌ها، روی یک فعالیت (نام یا میله) کلیک کنید. زمان در محور افقی از راست به چپ پیش می‌رود و بر حسب روز کاری است (جمعه و تعطیلات حذف می‌شوند).</p> : null}
       </div>
     </>
   );
@@ -263,35 +274,39 @@ function NameRow({ r, selected, collapsed, onToggle, onSelect }: { r: TaskRow; s
   );
 }
 
-function Bar({ r, g, i, selected }: { r: TaskRow; g: BarGeom; i: number; selected: boolean }) {
+function Bar({ r, g, i, total, selected }: { r: TaskRow; g: BarGeom; i: number; total: number; selected: boolean }) {
   const y = barTop(i);
   const s = r.s!;
   const title = `${r.t.name}\n${faDate(s.startDate)} تا ${faDate(s.finishDate)} — ${faInt(s.duration)} روز کاری — ${faPct(s.percent)}`;
+  // آغاز میله در راست و پایان آن در چپ است؛ بخش انجام‌شده از لبه‌ی راست (آغاز) پر می‌شود
+  const xr = flipX(total, g.x); // لبه‌ی راست = آغاز
   if (g.kind === 'milestone') {
     const cy = rowCenter(i);
     return (
-      <path className={`g-ms${g.critical ? ' crit' : ''}${selected ? ' sel' : ''}`} d={`M${g.x},${cy - 8}l8,8l-8,8l-8,-8z`}>
+      <path className={`g-ms${g.critical ? ' crit' : ''}${selected ? ' sel' : ''}`} d={`M${xr},${cy - 8}l8,8l-8,8l-8,-8z`}>
         <title>{title}</title>
       </path>
     );
   }
   if (g.kind === 'summary') {
     const h = 7;
+    const w = Math.max(g.w, 1);
     return (
       <g className={`g-sum${selected ? ' sel' : ''}`}>
         <title>{title}</title>
-        <rect x={g.x} y={y + 3} width={Math.max(g.w, 1)} height={h} />
-        <path d={`M${g.x},${y + 3 + h}l0,6l6,-6z`} />
-        <path d={`M${g.x + g.w},${y + 3 + h}l0,6l-6,-6z`} />
-        {g.doneW > 0 ? <rect className="g-sum-done" x={g.x} y={y + 3} width={g.doneW} height={h} /> : null}
+        <rect x={xr - w} y={y + 3} width={w} height={h} />
+        <path d={`M${xr},${y + 3 + h}l0,6l-6,-6z`} />
+        <path d={`M${xr - g.w},${y + 3 + h}l0,6l6,-6z`} />
+        {g.doneW > 0 ? <rect className="g-sum-done" x={xr - g.doneW} y={y + 3} width={g.doneW} height={h} /> : null}
       </g>
     );
   }
+  const w = Math.max(g.w, 2);
   return (
     <g className={`g-task${g.critical ? ' crit' : ''}${selected ? ' sel' : ''}`}>
       <title>{title}</title>
-      <rect className="g-bar" x={g.x} y={y} width={Math.max(g.w, 2)} height={BAR_H} rx={3} />
-      {g.doneW > 0 ? <rect className="g-done" x={g.x} y={y} width={g.doneW} height={BAR_H} rx={3} /> : null}
+      <rect className="g-bar" x={xr - w} y={y} width={w} height={BAR_H} rx={3} />
+      {g.doneW > 0 ? <rect className="g-done" x={xr - g.doneW} y={y} width={g.doneW} height={BAR_H} rx={3} /> : null}
     </g>
   );
 }
