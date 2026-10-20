@@ -169,9 +169,11 @@ jobs:
         run: |
           mkdir -p ci-out/deploy
           POSTGRES_PASSWORD=x docker compose -f deploy/docker-compose.yml config --quiet 2>&1 | tee ci-out/deploy/compose-config.log
-          for f in deploy/scripts/*.sh; do bash -n "$f"; done
+          for f in deploy/install.sh deploy/scripts/*.sh; do bash -n "$f"; done
       - name: آزمون دود (ساخت تصویر، بالاآمدن، ورود، پشتیبان، بازیابی)
         run: deploy/scripts/smoke-docker.sh 2>&1 | tee ci-out/deploy/smoke.log
+      - name: آزمون نصب‌کننده‌ی یک‌دستوری (نصب تازه + اجرای دوباره)
+        run: deploy/scripts/smoke-install.sh 2>&1 | tee ci-out/deploy/smoke-install.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

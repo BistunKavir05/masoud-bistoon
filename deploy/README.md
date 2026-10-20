@@ -12,10 +12,29 @@
 
 برای حدود ۱۰ کاربر یک سرور با ۲ هسته، ۲ گیگابایت RAM و ۱۰ گیگابایت دیسک کافی است.
 
+## نصب سریع (یک دستور، برای سرور آزمایشی یا اولین نصب)
+
+روی یک سرور لینوکسی که **Docker (با Compose v2)، git، curl و openssl** دارد:
+
+    git clone https://github.com/BistunKavir05/masoud-bistoon.git /opt/bistoon && sudo /opt/bistoon/deploy/install.sh
+
+(یا بی‌نیاز از کلون دستی: `curl -fsSL https://raw.githubusercontent.com/BistunKavir05/masoud-bistoon/main/deploy/install.sh | sudo bash`)
+
+نصب‌کننده رمز تصادفی پایگاه‌داده را می‌سازد، تصویر را می‌سازد و برنامه را بالا می‌آورد، منتظر سلامت می‌ماند، ادمین سیستم را با
+**گذرواژه‌ی موقت تصادفی** می‌سازد و در پایان نشانی و گذرواژه را چاپ می‌کند (گذرواژه فقط همین یک بار نمایش داده می‌شود و در اولین
+ورود باید عوض شود). اجرای دوباره‌اش ایمن است: `.env` و کاربران دست نمی‌خورند و فقط کد به‌روز و برنامه دوباره ساخته می‌شود.
+
+- پیش‌فرض برنامه روی `http://IP-سرور:3000` در دسترس است، **بدون رمزنگاری HTTP** — فقط برای شبکه‌ی داخلی/آزمایشی؛ پورت را در فایروال باز کنید.
+- پشت nginx با HTTPS: `install.sh --https-proxy` (فقط روی `127.0.0.1` گوش می‌دهد و کوکی امن می‌شود)؛ سپس `nginx/bistoon.conf` را بگذارید.
+- گزینه‌ها: `--port`، `--bind`، `--admin`، `--dir`، `--ref`، `--repo` (`install.sh --help`).
+
+اگر نیازهای خاص دارید (بدون Docker، PostgreSQL موجود، پروکسی سازمانی) از بخش‌های «الف» و «ب» پایین استفاده کنید.
+
 ## ساختار پوشه
 
 | فایل | کار |
 | --- | --- |
+| `install.sh` | نصب‌کننده‌ی یک‌دستوری با Docker Compose |
 | `Dockerfile`، `docker-compose.yml`، `.env.example` | نصب با Docker |
 | `systemd/bistoon.service` | سرویس برنامه (نصب بدون Docker) |
 | `systemd/bistoon-backup.service` و `.timer` | پشتیبان‌گیری شبانه (نصب بدون Docker) |
@@ -23,7 +42,7 @@
 | `scripts/backup.sh`، `restore.sh` | پشتیبان‌گیری و بازیابی |
 | `scripts/update.sh` | به‌روزرسانی با پشتیبان خودکار پیش از آن |
 | `scripts/healthcheck.sh` | بررسی سلامت |
-| `scripts/smoke-docker.sh` | آزمون دودی کل مسیر Docker (در CI اجرا می‌شود) |
+| `scripts/smoke-docker.sh`، `scripts/smoke-install.sh` | آزمون دودی مسیر Docker و نصب‌کننده (در CI اجرا می‌شود) |
 
 ## الف) نصب با Docker Compose
 
