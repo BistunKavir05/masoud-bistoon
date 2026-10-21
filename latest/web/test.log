@@ -1,0 +1,25 @@
+
+> @bistoon/web@0.1.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m/home/runner/work/masoud-bistoon/masoud-bistoon/apps/web[39m
+
+ [32m✓[39m test/auditLabels.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m test/gantt.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m test/xlsx.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+ [32m✓[39m test/fmt.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m test/taskRows.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m test/recurrenceImpact.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m test/holidays.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m test/password.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [32m✓[39m test/curve.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 3500[2mms[22m[39m
+   [33m[2m✓[22m[39m درون‌یابی یکنوا (منحنی واقعی از چند گزارش)[2m > [22mاز همه‌ی نقطه‌ها دقیقاً می‌گذرد و بین دو مقدار کناری می‌ماند (بدون بالازدگی) [33m 398[2mms[22m[39m
+   [33m[2m✓[22m[39m درون‌یابی یکنوا (منحنی واقعی از چند گزارش)[2m > [22mداده‌ی صعودی ← منحنی صعودی و درون ۰ تا ۱۰۰؛ بازگشت داده ← مماس افقی در نقطه‌ی بازگشت [33m 1967[2mms[22m[39m
+   [33m[2m✓[22m[39m گردکردن گوشه‌ها (منحنی برنامه‌ای و پیش‌بینی)[2m > [22mانحراف عمودی از خط شکسته‌ی اصلی در هیچ x از سقف بیشتر نیست؛ ابتدا و انتها ثابت‌اند [33m 1119[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+[2m      Tests [22m [1m[32m58 passed[39m[22m[90m (58)[39m
+[2m   Start at [22m 06:43:37
+[2m   Duration [22m 4.19s[2m (transform 538ms, setup 0ms, collect 1.79s, tests 3.76s, environment 3ms, prepare 917ms)[22m
+

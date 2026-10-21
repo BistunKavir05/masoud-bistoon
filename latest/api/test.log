@@ -1,0 +1,29 @@
+
+> @bistoon/api@0.1.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m/home/runner/work/masoud-bistoon/masoud-bistoon/apps/api[39m
+
+ [32m✓[39m test/msp.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 2490[2mms[22m[39m
+ [32m✓[39m test/records.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 2516[2mms[22m[39m
+ [32m✓[39m test/tasks.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 3146[2mms[22m[39m
+   [33m[2m✓[22m[39m پروژه‌ی بایگانی‌شده[2m > [22mهمه‌ی نوشتن‌ها رد می‌شوند و خواندن ممکن است [33m 520[2mms[22m[39m
+ [32m✓[39m test/import.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1733[2mms[22m[39m
+ [32m✓[39m test/recurring.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 2112[2mms[22m[39m
+ [32m✓[39m test/projects.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 2047[2mms[22m[39m
+ [32m✓[39m test/taskSave.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 1414[2mms[22m[39m
+ [32m✓[39m test/portfolio.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1295[2mms[22m[39m
+ [32m✓[39m test/auth.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 2433[2mms[22m[39m
+   [33m[2m✓[22m[39m ورود و نشست[2m > [22mبعد از ۵ تلاش ناموفق حساب موقتاً قفل می‌شود، حتی با گذرواژه‌ی درست [33m 425[2mms[22m[39m
+   [33m[2m✓[22m[39m تغییر گذرواژه[2m > [22mگذرواژه‌ی فعلی غلط، ضعیف یا مشابه رد می‌شود و موفق آن نشست‌های دیگر را می‌بندد [33m 685[2mms[22m[39m
+ [32m✓[39m test/leveling.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1460[2mms[22m[39m
+ [32m✓[39m test/migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 269[2mms[22m[39m
+ [32m✓[39m test/costImport.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1815[2mms[22m[39m
+   [33m[2m✓[22m[39m ورود دسته‌ای هزینه[2m > [22mسقف ۵۰۰۰ ردیف دفتر: ۴۰۹ LEDGER_FULL و دفتر دست‌نخورده می‌ماند [33m 616[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m12 passed[39m[22m[90m (12)[39m
+[2m      Tests [22m [1m[32m134 passed[39m[22m[90m (134)[39m
+[2m   Start at [22m 06:43:30
+[2m   Duration [22m 10.60s[2m (transform 1.12s, setup 0ms, collect 4.87s, tests 22.73s, environment 3ms, prepare 1.23s)[22m
+

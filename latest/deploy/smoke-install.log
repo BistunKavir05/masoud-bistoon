@@ -1,0 +1,129 @@
+── نصب تازه
+ app  Built
+ Network bistoon-install_default  Creating
+ Network bistoon-install_default  Created
+ Volume "bistoon-install_pgdata"  Creating
+ Volume "bistoon-install_pgdata"  Created
+ Container bistoon-install-db-1  Creating
+ Container bistoon-install-db-1  Created
+ Container bistoon-install-app-1  Creating
+ Container bistoon-install-app-1  Created
+ Container bistoon-install-db-1  Starting
+ Container bistoon-install-db-1  Started
+ Container bistoon-install-db-1  Waiting
+ Container bistoon-install-db-1  Healthy
+ Container bistoon-install-app-1  Starting
+ Container bistoon-install-app-1  Started
+── استفاده از کد موجود در /home/runner/work/masoud-bistoon/masoud-bistoon
+── ساخت /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/.env
+── ساخت تصویر و راه‌اندازی (بار اول چند دقیقه طول می‌کشد)
+#1 [internal] load local bake definitions
+#1 reading from stdin 397B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.92kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 222B done
+#4 DONE 0.0s
+
+#5 [build  1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 9.54kB 0.0s done
+#6 DONE 0.0s
+
+#7 [build  9/10] COPY apps apps
+#7 CACHED
+
+#8 [runtime  4/11] COPY packages/core/package.json packages/core/
+#8 CACHED
+
+#9 [build  7/10] RUN npm ci --no-audit --no-fund
+#9 CACHED
+
+#10 [runtime  9/11] COPY apps/api apps/api
+#10 CACHED
+
+#11 [runtime  6/11] COPY apps/web/package.json apps/web/
+#11 CACHED
+
+#12 [build  3/10] COPY package.json package-lock.json ./
+#12 CACHED
+
+#13 [build 10/10] RUN npm run build -w @bistoon/web
+#13 CACHED
+
+#14 [build  6/10] COPY apps/web/package.json apps/web/
+#14 CACHED
+
+#15 [runtime  5/11] COPY apps/api/package.json apps/api/
+#15 CACHED
+
+#16 [build  5/10] COPY apps/api/package.json apps/api/
+#16 CACHED
+
+#17 [runtime  3/11] COPY package.json package-lock.json ./
+#17 CACHED
+
+#18 [build  8/10] COPY packages packages
+#18 CACHED
+
+#19 [build  2/10] WORKDIR /src
+#19 CACHED
+
+#20 [runtime  7/11] RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+#20 CACHED
+
+#21 [runtime  2/11] WORKDIR /app
+#21 CACHED
+
+#22 [runtime  8/11] COPY packages/core packages/core
+#22 CACHED
+
+#23 [runtime 10/11] COPY db db
+#23 CACHED
+
+#24 [build  4/10] COPY packages/core/package.json packages/core/
+#24 CACHED
+
+#25 [runtime 11/11] COPY --from=build /src/apps/web/dist apps/web/dist
+#25 CACHED
+
+#26 exporting to image
+#26 exporting layers done
+#26 writing image sha256:db4cfd3db8d0d3634d31215fa97a11addb8a594be30db6ccddc051f2a0f2363a done
+#26 naming to docker.io/library/bistoon:local done
+#26 DONE 0.0s
+
+#27 resolving provenance for metadata file
+#27 DONE 0.0s
+── انتظار برای سلامت برنامه
+── ساخت ادمین سیستم «admin»
+
+════════════════ نصب بیستون انجام شد ════════════════
+نشانی:  http://127.0.0.1:3010
+نام کاربری:  admin
+گذرواژه‌ی موقت:  ***    ← فقط همین یک بار نمایش داده می‌شود؛ در اولین ورود باید عوض شود.
+ADMIN_USERNAME=admin
+ADMIN_TEMP_PASSWORD=***
+BISTOON_URL=http://127.0.0.1:3010
+
+دستورهای بعدی:
+  پشتیبان‌گیری:    /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/scripts/backup.sh --docker /var/backups/bistoon 30
+  به‌روزرسانی:      cd /home/runner/work/masoud-bistoon/masoud-bistoon && git pull && /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/scripts/update.sh --docker
+  گزارش برنامه:    docker compose -f /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/docker-compose.yml logs -f app
+  راهنمای کامل:    /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/README.md
+── اجرای دوباره (باید بی‌اثر باشد)
+ app  Built
+ Container bistoon-install-db-1  Running
+ Container bistoon-install-app-1  Running
+ Container bistoon-install-db-1  Waiting
+ Container bistoon-install-db-1  Healthy
+آزمون نصب‌کننده موفق بود.

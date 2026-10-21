@@ -1,0 +1,4 @@
+migration: db/migrations/0001_init.sql
+migration: db/migrations/0002_task_recurrence.sql
+ passed checks: 59
+

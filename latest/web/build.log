@@ -1,0 +1,12 @@
+
+> @bistoon/web@0.1.0 build
+> node build.mjs
+
+
+  dist/assets/app-DG5MB3Z7.js                   737.5kb
+  dist/assets/Vazirmatn-Medium-FSCVJPNL.woff2    49.9kb
+  dist/assets/Vazirmatn-Bold-BN5SB5QC.woff2      49.8kb
+  dist/assets/Vazirmatn-Regular-O6SSCPTM.woff2   49.5kb
+  dist/assets/app-FVU6ALXL.css                   25.9kb
+
+⚡ Done in 77ms

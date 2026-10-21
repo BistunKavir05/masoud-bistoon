@@ -1,0 +1,40 @@
+
+> @bistoon/core@0.1.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m/home/runner/work/masoud-bistoon/masoud-bistoon/packages/core[39m
+
+ [32m✓[39m test/recurrence.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 130[2mms[22m[39m
+ [32m✓[39m test/msp.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 235[2mms[22m[39m
+ [32m✓[39m test/mspImport.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 341[2mms[22m[39m
+ [32m✓[39m test/structure.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m test/scheduling.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+ [32m✓[39m test/metrics.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+ [32m✓[39m test/portfolio.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m test/exportCsv.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 143[2mms[22m[39m
+ [32m✓[39m test/costImport.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 87[2mms[22m[39m
+ [32m✓[39m test/legacy.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m test/repair.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32m✓[39m test/dashboard.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32m✓[39m test/charter.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m test/snapshotRows.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m test/resources.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+ [32m✓[39m test/xml.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32m✓[39m test/statusReport.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m test/calendarImpact.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+ [32m✓[39m test/permissions.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m test/baselineImpact.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32m✓[39m test/jalali.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1731[2mms[22m[39m
+   [33m[2m✓[22m[39m jalali[2m > [22mرفت‌وبرگشت روی بازه‌ی ۱۲۰۰ تا ۱۵۹۹ شمسی [33m 1725[2mms[22m[39m
+ [32m✓[39m test/schedulingProperties.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 5309[2mms[22m[39m
+   [33m[2m✓[22m[39m ویژگی‌های موتور زمان‌بندی روی پروژه‌های تصادفی[2m > [22mقواعد ساختاری روی 300 پروژه‌ی بدون ضرب‌الاجل [33m 979[2mms[22m[39m
+   [33m[2m✓[22m[39m ویژگی‌های موتور زمان‌بندی روی پروژه‌های تصادفی[2m > [22mقواعد ساختاری روی 300 پروژه‌ی دارای ضرب‌الاجل (شناوری منفی مجاز) [33m 872[2mms[22m[39m
+   [33m[2m✓[22m[39m ویژگی‌های موتور زمان‌بندی روی پروژه‌های تصادفی[2m > [22mشناوری کل با به‌تعویق‌انداختن واقعی سنجیده می‌شود (300 پروژه) [33m 2402[2mms[22m[39m
+   [33m[2m✓[22m[39m ویژگی‌های موتور زمان‌بندی روی پروژه‌های تصادفی[2m > [22mیکنوایی: افزودن قید «شروع نه زودتر» هیچ فعالیتی را زودتر نمی‌کند (300 پروژه) [33m 791[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m22 passed[39m[22m[90m (22)[39m
+[2m      Tests [22m [1m[32m291 passed[39m[22m[90m (291)[39m
+[2m   Start at [22m 06:42:51
+[2m   Duration [22m 8.16s[2m (transform 1.18s, setup 0ms, collect 2.80s, tests 8.80s, environment 9ms, prepare 2.51s)[22m
+

@@ -1,0 +1,319 @@
+── ساخت و بالاآوردن
+ db Pulling 
+ e2de96513ba9 Already exists 
+ 1b7f9cd581ee Pulling fs layer 
+ 210b280f9556 Pulling fs layer 
+ 81717818649a Pulling fs layer 
+ 3ae6141cfd99 Pulling fs layer 
+ 25b77f59fd95 Pulling fs layer 
+ 6c25da34e03f Pulling fs layer 
+ a88782f92806 Pulling fs layer 
+ d8d21be4bf02 Pulling fs layer 
+ 6117bd39f23f Pulling fs layer 
+ 509688edf37b Pulling fs layer 
+ 3ae6141cfd99 Waiting 
+ 25b77f59fd95 Waiting 
+ 6c25da34e03f Waiting 
+ 6117bd39f23f Waiting 
+ 509688edf37b Waiting 
+ a88782f92806 Waiting 
+ d8d21be4bf02 Waiting 
+ 81717818649a Downloading [==================================================>]     172B/172B
+ 81717818649a Verifying Checksum 
+ 81717818649a Download complete 
+ 210b280f9556 Downloading [>                                                  ]  15.79kB/901.4kB
+ 210b280f9556 Verifying Checksum 
+ 210b280f9556 Download complete 
+ 1b7f9cd581ee Downloading [==================================================>]     969B/969B
+ 1b7f9cd581ee Verifying Checksum 
+ 1b7f9cd581ee Download complete 
+ 1b7f9cd581ee Extracting [==================================================>]     969B/969B
+ 1b7f9cd581ee Extracting [==================================================>]     969B/969B
+ 6c25da34e03f Downloading [==================>                                ]  3.501kB/9.669kB
+ 6c25da34e03f Downloading [==================================================>]  9.669kB/9.669kB
+ 6c25da34e03f Verifying Checksum 
+ 6c25da34e03f Download complete 
+ 3ae6141cfd99 Downloading [==================================================>]     116B/116B
+ 3ae6141cfd99 Verifying Checksum 
+ 3ae6141cfd99 Download complete 
+ 25b77f59fd95 Downloading [>                                                  ]  538.3kB/111.3MB
+ 25b77f59fd95 Downloading [============>                                      ]  28.78MB/111.3MB
+ 25b77f59fd95 Downloading [==========================>                        ]  58.64MB/111.3MB
+ a88782f92806 Downloading [==================================================>]     128B/128B
+ a88782f92806 Verifying Checksum 
+ a88782f92806 Download complete 
+ d8d21be4bf02 Downloading [==================================================>]     169B/169B
+ d8d21be4bf02 Verifying Checksum 
+ d8d21be4bf02 Download complete 
+ 25b77f59fd95 Downloading [========================================>          ]  90.16MB/111.3MB
+ 25b77f59fd95 Verifying Checksum 
+ 25b77f59fd95 Download complete 
+ 509688edf37b Downloading [==================================================>]     185B/185B
+ 509688edf37b Verifying Checksum 
+ 509688edf37b Download complete 
+ 6117bd39f23f Downloading [============================>                      ]  3.501kB/6.111kB
+ 6117bd39f23f Downloading [==================================================>]  6.111kB/6.111kB
+ 6117bd39f23f Verifying Checksum 
+ 6117bd39f23f Download complete 
+ 1b7f9cd581ee Pull complete 
+ 210b280f9556 Extracting [=>                                                 ]  32.77kB/901.4kB
+ 210b280f9556 Extracting [==================================================>]  901.4kB/901.4kB
+ 210b280f9556 Extracting [==================================================>]  901.4kB/901.4kB
+ 210b280f9556 Pull complete 
+ 81717818649a Extracting [==================================================>]     172B/172B
+ 81717818649a Extracting [==================================================>]     172B/172B
+ 81717818649a Pull complete 
+ 3ae6141cfd99 Extracting [==================================================>]     116B/116B
+ 3ae6141cfd99 Extracting [==================================================>]     116B/116B
+ 3ae6141cfd99 Pull complete 
+ 25b77f59fd95 Extracting [>                                                  ]  557.1kB/111.3MB
+ 25b77f59fd95 Extracting [==>                                                ]  5.014MB/111.3MB
+ 25b77f59fd95 Extracting [======>                                            ]  14.48MB/111.3MB
+ 25b77f59fd95 Extracting [==========>                                        ]  23.95MB/111.3MB
+ 25b77f59fd95 Extracting [===============>                                   ]  33.42MB/111.3MB
+ 25b77f59fd95 Extracting [===================>                               ]  42.89MB/111.3MB
+ 25b77f59fd95 Extracting [=======================>                           ]  52.36MB/111.3MB
+ 25b77f59fd95 Extracting [==========================>                        ]  57.93MB/111.3MB
+ 25b77f59fd95 Extracting [=============================>                     ]  65.18MB/111.3MB
+ 25b77f59fd95 Extracting [=================================>                 ]  74.09MB/111.3MB
+ 25b77f59fd95 Extracting [====================================>              ]  81.33MB/111.3MB
+ 25b77f59fd95 Extracting [=====================================>             ]  82.44MB/111.3MB
+ 25b77f59fd95 Extracting [======================================>            ]  85.23MB/111.3MB
+ 25b77f59fd95 Extracting [========================================>          ]  89.69MB/111.3MB
+ 25b77f59fd95 Extracting [==========================================>        ]  93.59MB/111.3MB
+ 25b77f59fd95 Extracting [============================================>      ]  98.04MB/111.3MB
+ 25b77f59fd95 Extracting [================================================>  ]  108.6MB/111.3MB
+ 25b77f59fd95 Extracting [==================================================>]  111.3MB/111.3MB
+ 25b77f59fd95 Pull complete 
+ 6c25da34e03f Extracting [==================================================>]  9.669kB/9.669kB
+ 6c25da34e03f Extracting [==================================================>]  9.669kB/9.669kB
+ 6c25da34e03f Pull complete 
+ a88782f92806 Extracting [==================================================>]     128B/128B
+ a88782f92806 Extracting [==================================================>]     128B/128B
+ a88782f92806 Pull complete 
+ d8d21be4bf02 Extracting [==================================================>]     169B/169B
+ d8d21be4bf02 Extracting [==================================================>]     169B/169B
+ d8d21be4bf02 Pull complete 
+ 6117bd39f23f Extracting [==================================================>]  6.111kB/6.111kB
+ 6117bd39f23f Extracting [==================================================>]  6.111kB/6.111kB
+ 6117bd39f23f Pull complete 
+ 509688edf37b Extracting [==================================================>]     185B/185B
+ 509688edf37b Extracting [==================================================>]     185B/185B
+ 509688edf37b Pull complete 
+ db Pulled 
+#1 [internal] load local bake definitions
+#1 reading from stdin 397B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.92kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 ...
+
+#4 [auth] library/node:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 DONE 0.8s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 222B done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 1.38MB 0.0s done
+#6 DONE 0.0s
+
+#7 [build  1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9
+#7 resolve docker.io/library/node:22-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9 done
+#7 sha256:11422d7ca1a44390a32bd8d8d9dc5946b4d053b3bbd9507d682e35584ba84a26 6.29MB / 28.25MB 0.1s
+#7 sha256:41e886dd412c5cd3726825fbb11adcc20c053addb3d0052230930e699929e1dc 0B / 3.31kB 0.1s
+#7 sha256:576da2a04b86fc2f576457ce37a90d7a40f7445f94b016890d3ecb0f0d3371fb 0B / 49.84MB 0.1s
+#7 sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9 5.22kB / 5.22kB done
+#7 sha256:bbf39cb344bb33c1f2eedb3b45b4a890eecfbac91a4f7bac020a95d4e4ea147e 1.93kB / 1.93kB done
+#7 sha256:ecf6aca355bb97426fb9e9b3616c9d92dbae14b96f4851d1b47d2d6fe51c1a0d 6.77kB / 6.77kB done
+#7 sha256:11422d7ca1a44390a32bd8d8d9dc5946b4d053b3bbd9507d682e35584ba84a26 28.25MB / 28.25MB 0.2s done
+#7 sha256:41e886dd412c5cd3726825fbb11adcc20c053addb3d0052230930e699929e1dc 3.31kB / 3.31kB 0.2s done
+#7 sha256:80c7eb17e88afae2c7051a64cb4f0b234b434d36195aba50b05e7455157ee736 0B / 1.71MB 0.2s
+#7 sha256:6801706d64f22e698baf9e7efd382fb8ea2b159491f379ae571fbe6057790ce8 0B / 448B 0.2s
+#7 extracting sha256:11422d7ca1a44390a32bd8d8d9dc5946b4d053b3bbd9507d682e35584ba84a26
+#7 sha256:576da2a04b86fc2f576457ce37a90d7a40f7445f94b016890d3ecb0f0d3371fb 29.36MB / 49.84MB 0.3s
+#7 sha256:80c7eb17e88afae2c7051a64cb4f0b234b434d36195aba50b05e7455157ee736 1.71MB / 1.71MB 0.3s done
+#7 sha256:6801706d64f22e698baf9e7efd382fb8ea2b159491f379ae571fbe6057790ce8 448B / 448B 0.3s done
+#7 sha256:576da2a04b86fc2f576457ce37a90d7a40f7445f94b016890d3ecb0f0d3371fb 49.84MB / 49.84MB 0.4s done
+#7 extracting sha256:11422d7ca1a44390a32bd8d8d9dc5946b4d053b3bbd9507d682e35584ba84a26 1.1s done
+#7 extracting sha256:41e886dd412c5cd3726825fbb11adcc20c053addb3d0052230930e699929e1dc done
+#7 extracting sha256:576da2a04b86fc2f576457ce37a90d7a40f7445f94b016890d3ecb0f0d3371fb
+#7 extracting sha256:576da2a04b86fc2f576457ce37a90d7a40f7445f94b016890d3ecb0f0d3371fb 1.3s done
+#7 extracting sha256:80c7eb17e88afae2c7051a64cb4f0b234b434d36195aba50b05e7455157ee736
+#7 extracting sha256:80c7eb17e88afae2c7051a64cb4f0b234b434d36195aba50b05e7455157ee736 0.0s done
+#7 extracting sha256:6801706d64f22e698baf9e7efd382fb8ea2b159491f379ae571fbe6057790ce8 done
+#7 DONE 2.9s
+
+#8 [build  2/10] WORKDIR /src
+#8 DONE 0.0s
+
+#9 [runtime  2/11] WORKDIR /app
+#9 DONE 0.0s
+
+#10 [runtime  3/11] COPY package.json package-lock.json ./
+#10 DONE 0.0s
+
+#11 [build  3/10] COPY package.json package-lock.json ./
+#11 DONE 0.0s
+
+#12 [build  4/10] COPY packages/core/package.json packages/core/
+#12 DONE 0.0s
+
+#13 [runtime  4/11] COPY packages/core/package.json packages/core/
+#13 DONE 0.0s
+
+#14 [runtime  5/11] COPY apps/api/package.json apps/api/
+#14 DONE 0.0s
+
+#15 [build  5/10] COPY apps/api/package.json apps/api/
+#15 DONE 0.0s
+
+#16 [build  6/10] COPY apps/web/package.json apps/web/
+#16 DONE 0.0s
+
+#17 [runtime  6/11] COPY apps/web/package.json apps/web/
+#17 DONE 0.0s
+
+#18 [runtime  7/11] RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+#18 2.077 
+#18 2.077 added 86 packages in 2s
+#18 2.079 npm notice
+#18 2.079 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#18 2.079 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#18 2.079 npm notice To update run: npm install -g npm@12.2.0
+#18 2.079 npm notice
+#18 2.268 npm warn using --force Recommended protections disabled.
+#18 DONE 2.6s
+
+#19 [build  7/10] RUN npm ci --no-audit --no-fund
+#19 ...
+
+#20 [runtime  8/11] COPY packages/core packages/core
+#20 DONE 0.0s
+
+#21 [runtime  9/11] COPY apps/api apps/api
+#21 DONE 0.0s
+
+#22 [runtime 10/11] COPY db db
+#22 DONE 0.0s
+
+#19 [build  7/10] RUN npm ci --no-audit --no-fund
+#19 3.230 
+#19 3.230 added 156 packages in 3s
+#19 3.232 npm notice
+#19 3.232 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#19 3.232 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#19 3.232 npm notice To update run: npm install -g npm@12.2.0
+#19 3.232 npm notice
+#19 DONE 3.4s
+
+#23 [build  8/10] COPY packages packages
+#23 DONE 0.0s
+
+#24 [build  9/10] COPY apps apps
+#24 DONE 0.0s
+
+#25 [build 10/10] RUN npm run build -w @bistoon/web
+#25 0.240 
+#25 0.240 > @bistoon/web@0.1.0 build
+#25 0.240 > node build.mjs
+#25 0.240 
+#25 0.301 ▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+#25 0.301 
+#25 0.301     tsconfig.json:2:13:
+#25 0.301       2 │   "extends": "../../tsconfig.base.json",
+#25 0.301         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#25 0.301 
+#25 0.312 ▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+#25 0.312 
+#25 0.312     ../../packages/core/tsconfig.json:2:13:
+#25 0.312       2 │   "extends": "../../tsconfig.base.json",
+#25 0.312         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#25 0.312 
+#25 0.395 2 warnings
+#25 0.395 
+#25 0.395   dist/assets/app-DG5MB3Z7.js                   737.5kb
+#25 0.395   dist/assets/Vazirmatn-Medium-FSCVJPNL.woff2    49.9kb
+#25 0.395   dist/assets/Vazirmatn-Bold-BN5SB5QC.woff2      49.8kb
+#25 0.395   dist/assets/Vazirmatn-Regular-O6SSCPTM.woff2   49.5kb
+#25 0.395   dist/assets/app-FVU6ALXL.css                   25.9kb
+#25 0.395 
+#25 0.395 ⚡ Done in 97ms
+#25 DONE 0.4s
+
+#26 [runtime 11/11] COPY --from=build /src/apps/web/dist apps/web/dist
+#26 DONE 0.0s
+
+#27 exporting to image
+#27 exporting layers
+#27 exporting layers 1.3s done
+#27 writing image sha256:db4cfd3db8d0d3634d31215fa97a11addb8a594be30db6ccddc051f2a0f2363a done
+#27 naming to docker.io/library/bistoon:local done
+#27 DONE 1.3s
+
+#28 resolving provenance for metadata file
+#28 DONE 0.0s
+ app  Built
+ Network bistoon-smoke_default  Creating
+ Network bistoon-smoke_default  Created
+ Volume "bistoon-smoke_pgdata"  Creating
+ Volume "bistoon-smoke_pgdata"  Created
+ Container bistoon-smoke-db-1  Creating
+ Container bistoon-smoke-db-1  Created
+ Container bistoon-smoke-app-1  Creating
+ Container bistoon-smoke-app-1  Created
+ Container bistoon-smoke-db-1  Starting
+ Container bistoon-smoke-db-1  Started
+ Container bistoon-smoke-db-1  Waiting
+ Container bistoon-smoke-db-1  Healthy
+ Container bistoon-smoke-app-1  Starting
+ Container bistoon-smoke-app-1  Started
+── انتظار برای سلامت برنامه
+── ساخت ادمین سیستم
+ادمین سیستم ساخته شد: smoke
+── ورود
+── رابط کاربری و مسیر SPA
+── هدرهای امنیتی
+── پشتیبان‌گیری
+── حذف داده‌ی نمونه و بازیابی
+NOTICE:  truncate cascades to table "sessions"
+NOTICE:  truncate cascades to table "projects"
+NOTICE:  truncate cascades to table "project_members"
+NOTICE:  truncate cascades to table "resources"
+NOTICE:  truncate cascades to table "tasks"
+NOTICE:  truncate cascades to table "baselines"
+NOTICE:  truncate cascades to table "snapshots"
+NOTICE:  truncate cascades to table "cost_entries"
+NOTICE:  truncate cascades to table "project_charter"
+NOTICE:  truncate cascades to table "project_contract"
+NOTICE:  truncate cascades to table "risks"
+NOTICE:  truncate cascades to table "issues"
+NOTICE:  truncate cascades to table "change_requests"
+NOTICE:  truncate cascades to table "decisions"
+NOTICE:  truncate cascades to table "project_documents"
+NOTICE:  truncate cascades to table "chat_messages"
+NOTICE:  truncate cascades to table "legacy_imports"
+NOTICE:  truncate cascades to table "project_counters"
+NOTICE:  truncate cascades to table "project_workdays"
+NOTICE:  truncate cascades to table "project_holidays"
+NOTICE:  truncate cascades to table "task_dependencies"
+NOTICE:  truncate cascades to table "task_assignments"
+NOTICE:  truncate cascades to table "task_direct_costs"
+NOTICE:  truncate cascades to table "baseline_items"
+NOTICE:  truncate cascades to table "snapshot_tasks"
+ Container bistoon-smoke-app-1  Stopping
+ Container bistoon-smoke-app-1  Stopped
+ Container bistoon-smoke-db-1  Waiting
+ Container bistoon-smoke-db-1  Healthy
+ Container bistoon-smoke-app-1  Starting
+ Container bistoon-smoke-app-1  Started
+── ورود پس از بازیابی
+آزمون دودی استقرار Docker موفق بود.
