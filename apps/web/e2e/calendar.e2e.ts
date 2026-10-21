@@ -90,7 +90,9 @@ describe('تقویم کاری', () => {
     await page.getByTestId('week-apply-template').click();
     await page.getByTestId('week-save').click();
     await page.getByTestId('week-confirm').click();
-    await page.getByText('هفته‌ی کاری ذخیره شد.').first().waitFor();
+    // اعلانِ ذخیره‌ی قبلی هنوز روی صفحه است و `.first()` فوراً برمی‌گردد؛ پس تا ثبت واقعی در سرور صبر می‌کنیم
+    const deadline = Date.now() + 10_000;
+    while ((await calendar(stack, seed.pid)).days[4]!.working !== true && Date.now() < deadline) await page.waitForTimeout(100);
     assert.equal((await calendar(stack, seed.pid)).days[4]!.working, true);
     assert.deepEqual(errors, []);
   });
