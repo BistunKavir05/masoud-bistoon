@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toCsv } from '@bistoon/core';
 import { apiGet, errorMessage } from '../../api/client.ts';
 import { MIME_CSV, downloadFile } from '../../lib/download.ts';
-import { ENTITY_LABELS, actionLabel, fieldLabel, flatEntries, formatAuditValue, summarizeAuditValue } from '../../lib/auditLabels.ts';
+import { ENTITY_LABELS, actionLabel, auditSearchKey, faEntityId, fieldLabel, flatEntries, formatAuditValue, summarizeAuditValue } from '../../lib/auditLabels.ts';
 import { faDateTime, faInt } from '../../lib/fmt.ts';
 import { useMembers } from '../../state/members.ts';
 import { useProjectState } from '../../state/project.ts';
@@ -27,6 +27,7 @@ interface Entry {
 
 const PAGE = 100;
 
+
 function ValueView({ v }: { v: unknown }) {
   const flat = flatEntries(v);
   if (flat && flat.length > 0) {
@@ -35,7 +36,7 @@ function ValueView({ v }: { v: unknown }) {
         {flat.map(([k, x]) => (
           <div key={k}>
             <dt>{fieldLabel(k)}</dt>
-            <dd dir="auto">{formatAuditValue(x, 300)}</dd>
+            <dd dir="auto">{formatAuditValue(x, 300, k)}</dd>
           </div>
         ))}
       </dl>
@@ -69,7 +70,7 @@ function Detail({ e, close }: { e: Entry; close: () => void }) {
           <div>
             <dt>موضوع</dt>
             <dd>
-              {ENTITY_LABELS[e.entity] ?? e.entity} {e.entityId}
+              {ENTITY_LABELS[e.entity] ?? e.entity} {faEntityId(e.entityId)}
             </dd>
           </div>
           <div>
@@ -162,14 +163,14 @@ export function LogTab() {
   };
 
   const shown = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needle = auditSearchKey(q);
     if (!rows || needle === '') return rows ?? [];
-    return rows.filter((r) => `${actionLabel(r.action, r.entity)} ${r.actorName} ${r.entityId} ${fieldLabel(r.field)} ${formatAuditValue(r.oldValue, 300)} ${formatAuditValue(r.newValue, 300)}`.toLowerCase().includes(needle));
+    return rows.filter((r) => auditSearchKey(`${actionLabel(r.action, r.entity)} ${r.actorName} ${faEntityId(r.entityId)} ${fieldLabel(r.field)} ${formatAuditValue(r.oldValue, 300, r.field)} ${formatAuditValue(r.newValue, 300, r.field)}`).includes(needle));
   }, [rows, q]);
 
   const exportCsv = (): void => {
     const header = ['زمان', 'کاربر', 'رخداد', 'موضوع', 'شناسه', 'فیلد', 'مقدار قبلی', 'مقدار جدید', 'IP', 'شناسه‌ی درخواست'];
-    const body = shown.map((r) => [faDateTime(r.at), r.actorName, actionLabel(r.action, r.entity), ENTITY_LABELS[r.entity] ?? r.entity, r.entityId, r.field ? fieldLabel(r.field) : '', formatAuditValue(r.oldValue, 2000), formatAuditValue(r.newValue, 2000), r.ip ?? '', r.requestId]);
+    const body = shown.map((r) => [faDateTime(r.at), r.actorName, actionLabel(r.action, r.entity), ENTITY_LABELS[r.entity] ?? r.entity, faEntityId(r.entityId), r.field ? fieldLabel(r.field) : '', formatAuditValue(r.oldValue, 2000, r.field), formatAuditValue(r.newValue, 2000, r.field), r.ip ?? '', r.requestId]);
     downloadFile(`audit-${pid}.csv`, toCsv([header, ...body]), MIME_CSV);
   };
 
@@ -221,11 +222,11 @@ export function LogTab() {
                         <td>{r.actorName || '—'}</td>
                         <td>{actionLabel(r.action, r.entity)}</td>
                         <td>
-                          {ENTITY_LABELS[r.entity] ?? r.entity} <span className="muted num">{r.entityId}</span>
+                          {ENTITY_LABELS[r.entity] ?? r.entity} <span className="muted num">{faEntityId(r.entityId)}</span>
                         </td>
                         <td>{r.field ? fieldLabel(r.field) : <span className="muted">—</span>}</td>
-                        <td className="cell-val" dir="auto">{summarizeAuditValue(r.oldValue)}</td>
-                        <td className="cell-val" dir="auto">{summarizeAuditValue(r.newValue)}</td>
+                        <td className="cell-val" dir="auto">{summarizeAuditValue(r.oldValue, 60, r.field)}</td>
+                        <td className="cell-val" dir="auto">{summarizeAuditValue(r.newValue, 60, r.field)}</td>
                         <td className="c">
                           <Btn size="sm" onClick={() => void openDialog('جزئیات رخداد', (close) => <Detail e={r} close={() => close()} />, { wide: true })} testId={`log-detail-${r.id}`}>
                             جزئیات

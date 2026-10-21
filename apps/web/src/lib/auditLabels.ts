@@ -1,4 +1,5 @@
-import { faInt } from './fmt.ts';
+import { isIsoDate, normalizeDigits, toPersianDigits } from '@bistoon/core';
+import { faDate, faInt, faNum } from './fmt.ts';
 
 /** برچسب‌های فارسی گزارش تغییرات: موضوع، عمل، فیلد و مقدار. بدون React تا قابل آزمون باشد. */
 
@@ -171,21 +172,38 @@ const FIELD_LABELS: Record<string, string> = {
 
 export const fieldLabel = (f: string): string => FIELD_LABELS[f] ?? f;
 
-/** مقدار ثبت‌شده در گزارش به متن کوتاه و قابل‌خواندن */
-export function formatAuditValue(v: unknown, max = 100): string {
+/** فیلدهایی که شناسه/شماره‌ی فنی‌اند؛ ارقام فارسی می‌گیرند ولی جداکننده‌ی هزارگان نه (۱٬۲۳۴ به‌جای ۱۲۳۴ برای یک شناسه گمراه‌کننده است) */
+const ID_KEY = /^id$|Id$|^version$|^level$/;
+
+/** شناسه‌ی عددی رخداد با ارقام فارسی؛ شناسه‌ی غیرعددی (مثلاً متنی) دست‌نخورده می‌ماند */
+export const faEntityId = (id: string): string => (/^\d+$/.test(id) ? toPersianDigits(id) : id);
+
+/**
+ * مقدار ثبت‌شده در گزارش به متن کوتاه و قابل‌خواندن.
+ * عدد: ارقام فارسی + جداکننده‌ی هزارگان (تا ۴ رقم اعشار، بدون نویز ممیز شناور)؛ تاریخ ISO: تاریخ شمسی؛ `key` نام فیلد است.
+ */
+export function formatAuditValue(v: unknown, max = 100, key?: string): string {
   if (v === null || v === undefined || v === '') return '—';
   let s: string;
-  if (typeof v === 'string') s = v;
-  else if (typeof v === 'number') s = String(v);
+  if (typeof v === 'string') s = isIsoDate(v) ? faDate(v) : v;
+  else if (typeof v === 'number') s = key !== undefined && ID_KEY.test(key) ? toPersianDigits(String(v)) : faNum(v, 4);
   else if (typeof v === 'boolean') s = v ? 'بله' : 'خیر';
   else s = JSON.stringify(v);
   return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }
 
+/** کلید جست‌وجو: ارقام فارسی/عربی ← لاتین، جداکننده‌ی هزارگان میان ارقام حذف و ممیز فارسی ← نقطه؛ تا «۱٬۵۰۰٬۰۰۰»، «۱۵۰۰۰۰۰» و «1500000» همدیگر را پیدا کنند */
+export const auditSearchKey = (s: string): string =>
+  normalizeDigits(s)
+    .replace(/(\d)[٬,](?=\d)/g, '$1')
+    .replace(/٫/g, '.')
+    .trim()
+    .toLowerCase();
+
 const NAME_KEYS = ['title', 'name', 'displayName', 'number', 'subject', 'description'];
 
 /** خلاصه‌ی یک مقدار برای سلول جدول: شیء ← نام/عنوان آن یا «n فیلد»، آرایه ← «n مورد» */
-export function summarizeAuditValue(v: unknown, max = 60): string {
+export function summarizeAuditValue(v: unknown, max = 60, key?: string): string {
   if (Array.isArray(v)) return `${faInt(v.length)} مورد`;
   if (v !== null && typeof v === 'object') {
     const o = v as Record<string, unknown>;
@@ -195,7 +213,7 @@ export function summarizeAuditValue(v: unknown, max = 60): string {
     }
     return `${faInt(Object.keys(o).length)} فیلد`;
   }
-  return formatAuditValue(v, max);
+  return formatAuditValue(v, max, key);
 }
 
 /** شیء تخت با مقدارهای ساده (قابل نمایش به‌صورت فهرست «فیلد: مقدار») */

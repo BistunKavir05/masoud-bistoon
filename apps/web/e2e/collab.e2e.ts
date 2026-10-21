@@ -168,12 +168,28 @@ describe('مستندات، گفتگو و گزارش تغییرات', () => {
   it('گزارش تغییرات: ادمین و مدیریت می‌بینند؛ فیلتر، جزئیات و خروجی CSV؛ مدیر پروژه و کارشناس دسترسی ندارند', async () => {
     const { page, errors } = await newSession(browser, stack.baseUrl);
     await loginAs(page, 'admin', `${ADMIN_PASSWORD}-x`);
+    // یک تغییر عددیِ بزرگ در قرارداد: در گزارش با رقم فارسی و جداکننده‌ی هزارگان دیده شود
+    const bundle = await stack.admin.call<{ contract: { version: number } }>('GET', `/projects/${seed.pid}/model`);
+    await stack.admin.call('PATCH', `/projects/${seed.pid}/contract`, { version: bundle.contract.version, advanceAmount: 1500000 });
     await page.goto(`/#/p/${seed.pid}/log`);
     await page.getByRole('heading', { name: 'گزارش تغییرات' }).waitFor();
     const table = page.getByTestId('log-table');
     await table.waitFor();
     const all = await page.locator('[data-testid^="log-row-"]').count();
     assert.ok(all > 5, `رخدادها کم است: ${all}`);
+    // جست‌وجو با هر شکل نوشتنِ عدد (لاتین، فارسی، با/بدون جداکننده) همان یک ردیف را می‌یابد
+    const rowsNow = page.locator('[data-testid^="log-row-"]');
+    for (const typed of ['1500000', '۱۵۰۰۰۰۰', '1,500,000', '۱٬۵۰۰٬۰۰۰']) {
+      await page.getByTestId('log-search').fill(typed);
+      await page.waitForFunction((n) => document.querySelectorAll('[data-testid^="log-row-"]').length < n, all);
+      assert.equal(await rowsNow.count(), 1, `جست‌وجوی ${typed}`);
+      const text = await rowsNow.first().innerText();
+      assert.match(text, /۱٬۵۰۰٬۰۰۰/);
+      assert.doesNotMatch(text, /1500000|1,500,000/);
+    }
+    await page.screenshot({ path: `${shotDir}/log-numbers.png` });
+    await page.getByTestId('log-search').fill('');
+    await page.waitForFunction((n) => document.querySelectorAll('[data-testid^="log-row-"]').length === n, all);
     await page.getByLabel('موضوع', { exact: true }).selectOption('document');
     await page.waitForFunction((n) => document.querySelectorAll('[data-testid^="log-row-"]').length < n, all);
     const docRows = page.locator('[data-testid^="log-row-"]');
