@@ -9,13 +9,17 @@ const BASE = process.env['TEST_DATABASE_URL'] ?? 'postgres://postgres:postgres@1
 const name = `bistoon_m_${Math.random().toString(16).slice(2, 10)}`;
 let admin: Pool;
 let pool: Pool;
+// DROP DATABASE ... WITH (FORCE) پیوندهای باقی‌مانده را می‌بندد؛ خطای ۵۷P01 روی یک کلاینتِ بیکار نباید «استثنای مدیریت‌نشده» شود
+const ignoreTermination = (): void => undefined;
 
 beforeAll(async () => {
   admin = new Pool({ connectionString: BASE, max: 1 });
+  admin.on('error', ignoreTermination);
   await admin.query(`CREATE DATABASE ${name}`);
   const u = new URL(BASE);
   u.pathname = `/${name}`;
   pool = new Pool({ connectionString: u.toString(), max: 3 });
+  pool.on('error', ignoreTermination);
 });
 afterAll(async () => {
   await pool.end();
@@ -36,6 +40,7 @@ describe('اجرای migration', () => {
     const u = new URL(BASE);
     u.pathname = `/${name}`;
     const other = new Pool({ connectionString: u.toString(), max: 2 });
+    other.on('error', ignoreTermination);
     const results = await Promise.all([migrate(pool), migrate(other)]);
     expect(results.flat()).toEqual([]);
     await other.end();
