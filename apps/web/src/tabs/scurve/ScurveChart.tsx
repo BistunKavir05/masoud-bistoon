@@ -3,12 +3,17 @@ import type { KeyboardEvent, PointerEvent } from 'react';
 import { toJalali, toPersianDigits } from '@bistoon/core';
 import type { DayAxis, IsoDate, SCurve } from '@bistoon/core';
 import { faNum, faPct } from '../../lib/fmt.ts';
+import { curvePath, evalCurve, monotoneCurve, polylineCurve, roundedCurve } from '../../lib/curve.ts';
+import type { Pt } from '../../lib/curve.ts';
 
 const W = 900;
 const H = 380;
 const M = { l: 46, r: 18, t: 22, b: 46 };
 const PW = W - M.l - M.r;
 const PH = H - M.t - M.b;
+
+/** بیشینه‌ی اختلاف عمودیِ منحنی هموار با مقدار دقیق روزانه، به واحد درصد (فقط برای زیبایی؛ مقدارهای نوشتاری همیشه دقیق‌اند) */
+export const SMOOTH_MAX_DEV = 1;
 
 const STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
 
@@ -32,28 +37,24 @@ function fullJalali(iso: IsoDate): string {
   return toPersianDigits(`${j.jy}/${String(j.jm).padStart(2, '0')}/${String(j.jd).padStart(2, '0')}`);
 }
 
-/** مقدار واقعی در x با درون‌یابی خطی بین نقطه‌ها (از مبدأ تا آخرین گزارش)؛ بعد از آخرین گزارش null */
-function actualAt(points: readonly { x: number; y: number }[], u: number): number | null {
-  let prev = { x: 0, y: 0 };
-  for (const p of points) {
-    if (u <= p.x) return p.x === prev.x ? p.y : prev.y + ((p.y - prev.y) * (u - prev.x)) / (p.x - prev.x);
-    prev = p;
-  }
-  return null;
-}
-
-const line = (pts: readonly (readonly [number, number])[], px: (x: number) => number, py: (y: number) => number): string => pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${px(x).toFixed(1)},${py(y).toFixed(1)}`).join('');
-
-export function ScurveChart({ curve, axis }: { curve: SCurve; axis: DayAxis }) {
+/**
+ * منحنی S. با `smooth` (پیش‌فرض) گوشه‌های برنامه‌ای و پیش‌بینی گرد می‌شود و منحنی واقعی با درون‌یابی یکنوا از نقطه‌های گزارش
+ * می‌گذرد؛ بدون آن، همه‌ی منحنی‌ها خط شکسته‌ی دقیق‌اند. عددِ نشانگر برای برنامه‌ای و پیش‌بینی همیشه مقدار دقیق روزانه است
+ * و برای واقعی همان مقدار منحنی ترسیم‌شده (بین دو گزارش تخمین است، مثل قبل).
+ */
+export function ScurveChart({ curve, axis, smooth = true }: { curve: SCurve; axis: DayAxis; smooth?: boolean }) {
   const uid = useId();
   const [hover, setHover] = useState<number | null>(null);
   const px = (x: number): number => M.l + (x / curve.length) * PW;
   const py = (y: number): number => M.t + (1 - Math.max(0, Math.min(100, y)) / 100) * PH;
 
-  const planned = useMemo(() => line(curve.planned, px, py), [curve]); // eslint-disable-line react-hooks/exhaustive-deps
-  const actualPts = useMemo(() => [{ x: 0, y: 0 }, ...curve.actual.map((p) => ({ x: p.x, y: p.y }))], [curve]);
-  const actualPath = useMemo(() => line(actualPts.map((p) => [p.x, p.y] as const), px, py), [actualPts]); // eslint-disable-line react-hooks/exhaustive-deps
-  const forecast = useMemo(() => (curve.forecast.length > 1 ? line(curve.forecast, px, py) : ''), [curve]); // eslint-disable-line react-hooks/exhaustive-deps
+  const plannedCurve = useMemo(() => (smooth ? roundedCurve(curve.planned, SMOOTH_MAX_DEV) : polylineCurve(curve.planned)), [curve, smooth]);
+  const actualPts = useMemo(() => [[0, 0] as Pt, ...curve.actual.map((p): Pt => [p.x, p.y])], [curve]);
+  const actualCurve = useMemo(() => (smooth ? monotoneCurve(actualPts) : polylineCurve(actualPts)), [actualPts, smooth]);
+  const forecastCurve = useMemo(() => (curve.forecast.length > 1 ? (smooth ? roundedCurve(curve.forecast, SMOOTH_MAX_DEV) : polylineCurve(curve.forecast)) : null), [curve, smooth]);
+  const planned = useMemo(() => curvePath(plannedCurve, px, py), [plannedCurve]); // eslint-disable-line react-hooks/exhaustive-deps
+  const actualPath = useMemo(() => curvePath(actualCurve, px, py), [actualCurve]); // eslint-disable-line react-hooks/exhaustive-deps
+  const forecast = useMemo(() => (forecastCurve ? curvePath(forecastCurve, px, py) : ''), [forecastCurve]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const step = tickStep(curve.length);
   const xs: number[] = [];
@@ -64,7 +65,7 @@ export function ScurveChart({ curve, axis }: { curve: SCurve; axis: DayAxis }) {
     if (u === null) return null;
     const pl = curve.planned[u]?.[1] ?? 100;
     const fc = u >= curve.statusX ? (curve.forecast.find((p) => p[0] === u)?.[1] ?? (u > (curve.forecast[curve.forecast.length - 1]?.[0] ?? 0) ? 100 : null)) : null;
-    return { planned: pl, actual: actualAt(actualPts, u), forecast: fc, date: dateOfX(axis, u) };
+    return { planned: pl, actual: evalCurve(actualCurve, u), forecast: fc, date: dateOfX(axis, u) };
   };
   const info = at(hover);
 
@@ -194,7 +195,7 @@ export function ScurveChart({ curve, axis }: { curve: SCurve; axis: DayAxis }) {
         {hover !== null ? (
           <g pointerEvents="none">
             <line className="sc-cross" x1={px(hover)} x2={px(hover)} y1={M.t} y2={H - M.b} />
-            {info ? <circle className="sc-hp plan" cx={px(hover)} cy={py(info.planned)} r={4} /> : null}
+            {info ? <circle className="sc-hp plan" cx={px(hover)} cy={py(evalCurve(plannedCurve, hover ?? 0) ?? info.planned)} r={4} /> : null}
             {info && info.actual !== null ? <circle className="sc-hp act" cx={px(hover)} cy={py(info.actual)} r={4} /> : null}
           </g>
         ) : null}
@@ -219,6 +220,11 @@ export function ScurveChart({ curve, axis }: { curve: SCurve; axis: DayAxis }) {
           <i className="dot cur" /> وضعیت فعلی
         </li>
       </ul>
+      {smooth ? (
+        <p className="sc-note muted" data-testid="sc-smooth-note">
+          گوشه‌های منحنی فقط برای خوانایی گرد شده‌اند و از مقدار دقیق هر روز حداکثر {faNum(SMOOTH_MAX_DEV)} واحد درصد فاصله دارند؛ عددهای نشانگر و جدول دقیق‌اند. منحنی واقعی از نقطه‌های گزارش‌شده می‌گذرد و میان دو گزارش تخمین است.
+        </p>
+      ) : null}
     </div>
   );
 }

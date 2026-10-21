@@ -69,6 +69,18 @@ describe('منحنی S و خط مبنا', () => {
     assert.match(await page.getByTestId('sc-table').innerText(), /وضعیت فعلی/);
     await page.screenshot({ path: `${shotDir}/scurve.png`, fullPage: true });
 
+    // حالت هموار پیش‌فرض است (کمان در مسیر برنامه‌ای)، با کلید به خط شکسته‌ی دقیق برمی‌گردد
+    const planD = (): Promise<string | null> => page.locator('path.sc-plan').getAttribute('d');
+    assert.equal(await page.getByTestId('sc-smooth').isChecked(), true);
+    assert.match((await planD()) ?? '', /Q/);
+    await page.getByTestId('sc-smooth-note').waitFor();
+    await page.getByTestId('sc-smooth').uncheck();
+    assert.doesNotMatch((await planD()) ?? '', /[QC]/);
+    assert.equal(await page.getByTestId('sc-smooth-note').count(), 0);
+    await page.screenshot({ path: `${shotDir}/scurve-exact.png` });
+    await page.getByTestId('sc-smooth').check();
+    assert.match((await planD()) ?? '', /Q/);
+
     // نشانگر مقدار با کلید
     await page.getByTestId('scurve-chart').focus();
     await page.keyboard.press('End');
@@ -81,6 +93,8 @@ describe('منحنی S و خط مبنا', () => {
     let m = await model(stack, seed.pid);
     const est = m.snapshots.filter((s) => s.estimated);
     assert.ok(est.length >= 2, `تخمینی‌ها ${est.length}`);
+    // منحنی واقعی با چند گزارش، مکعبیِ یکنوا می‌شود و نشانگر مقدارش را می‌خواند
+    assert.match((await page.locator('path.sc-act').getAttribute('d')) ?? '', /C/);
     assert.equal(await page.locator('[data-testid^="sc-row-"]').count(), est.length + 1);
     // بازسازی دوباره نیازمند تأیید است (جایگزینی)
     await page.getByTestId('sc-estimate').click();

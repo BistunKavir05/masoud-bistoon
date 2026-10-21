@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { buildSnapshotRows, explainDrop, snapshotTaskProgress, summarizeBaseline } from '@bistoon/core';
 import type { SnapshotRow } from '@bistoon/core';
 import { apiDelete, apiPost } from '../../api/client.ts';
@@ -19,6 +19,7 @@ export function ScurveTab() {
   const ps = useProjectState();
   const can = useCan();
   const { busy, run } = useAction();
+  const [smooth, setSmooth] = useState(true);
   const b = ps.bundle!;
   const a = ps.analysis;
   const model = ps.model;
@@ -200,8 +201,16 @@ export function ScurveTab() {
           </div>
         </Card>
 
-        <Card title="نمودار پیشرفت تجمعی">
-          <ScurveChart curve={scurve} axis={axis} />
+        <Card
+          title="نمودار پیشرفت تجمعی"
+          actions={
+            <label className="chk">
+              <input type="checkbox" checked={smooth} onChange={(e) => setSmooth(e.target.checked)} data-testid="sc-smooth" />
+              منحنی هموار
+            </label>
+          }
+        >
+          <ScurveChart curve={scurve} axis={axis} smooth={smooth} />
         </Card>
 
         <Card title="گزارش‌های پیشرفت">
