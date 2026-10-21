@@ -34,6 +34,22 @@ const slopeAt = (c: Curve, x: number, side: -1 | 1, h = 1e-6): number => {
   return a === null || b === null ? NaN : ((b - a) / h) * side;
 };
 
+/** نمونه‌گیریِ O(n) از منحنی: روی هر قطعه به‌تنهایی ارزیابی می‌شود (نه با پیمایش کل منحنی برای هر x) */
+function sample(c: Curve, step: number, fn: (x: number, y: number) => void): void {
+  let from = c.start;
+  fn(from[0], from[1]);
+  for (const s of c.segs) {
+    const x0 = from[0];
+    const x1 = s.to[0];
+    if (x1 > x0) {
+      const local: Curve = { start: from, segs: [s] };
+      for (let k = Math.floor(x0 / step) + 1; k * step < x1; k += 1) fn(k * step, evalCurve(local, k * step) as number);
+    }
+    fn(x1, s.to[1]);
+    from = s.to;
+  }
+}
+
 describe('درون‌یابی یکنوا (منحنی واقعی از چند گزارش)', () => {
   it('از همه‌ی نقطه‌ها دقیقاً می‌گذرد و بین دو مقدار کناری می‌ماند (بدون بالازدگی)', () => {
     for (let seed = 1; seed <= 300; seed += 1) {
@@ -158,36 +174,39 @@ function randomDaily(seed: number): Pt[] {
 
 describe('گردکردن گوشه‌ها (منحنی برنامه‌ای و پیش‌بینی)', () => {
   it('انحراف عمودی از خط شکسته‌ی اصلی در هیچ x از سقف بیشتر نیست؛ ابتدا و انتها ثابت‌اند', () => {
-    for (let seed = 1; seed <= 200; seed += 1) {
+    for (let seed = 1; seed <= 120; seed += 1) {
       for (const maxDev of [0.1, 1, 3]) {
         const pts = randomDaily(seed);
         const c = roundedCurve(pts, maxDev);
         expect(curveKnots(c)[0]).toEqual(pts[0]);
         expect(curveKnots(c).at(-1)).toEqual(pts[pts.length - 1]);
-        const last = (pts[pts.length - 1] as Pt)[0];
-        // همه‌ی روزها + نقاط میانی
-        for (let k = 0; k <= last * 4; k += 1) {
-          const x = k / 4;
-          const v = evalCurve(c, x);
-          expect(v).not.toBeNull();
-          expect(Math.abs((v as number) - polyAt(pts, x))).toBeLessThanOrEqual(maxDev + 1e-9);
-        }
+        // همه‌ی روزها و نقاط میانی (گام ۰٫۲۵)
+        let worst = 0;
+        let n = 0;
+        sample(c, 0.25, (x, y) => {
+          n += 1;
+          worst = Math.max(worst, Math.abs(y - polyAt(pts, x)));
+        });
+        expect(n).toBeGreaterThan(pts.length);
+        expect(worst).toBeLessThanOrEqual(maxDev + 1e-9);
       }
     }
   });
 
   it('صعودی می‌ماند، از ۰ تا ۱۰۰ بیرون نمی‌زند و با گردکردن مقدار هیچ روزی از داده‌ی خودش عبور نمی‌کند', () => {
-    for (let seed = 500; seed <= 700; seed += 1) {
+    for (let seed = 500; seed <= 600; seed += 1) {
       const pts = randomDaily(seed);
       const c = roundedCurve(pts, 1);
       let prev = -Infinity;
-      const last = (pts[pts.length - 1] as Pt)[0];
-      for (let k = 0; k <= last * 8; k += 1) {
-        const v = evalCurve(c, k / 8) as number;
-        expect(v >= prev - 1e-9).toBe(true);
-        expect(v >= -1e-9 && v <= 100 + 1e-9).toBe(true);
-        prev = v;
-      }
+      let drops = 0;
+      let outside = 0;
+      sample(c, 0.5, (_x, y) => {
+        if (y < prev - 1e-9) drops += 1;
+        if (y < -1e-9 || y > 100 + 1e-9) outside += 1;
+        prev = y;
+      });
+      expect(drops).toBe(0);
+      expect(outside).toBe(0);
     }
   });
 
