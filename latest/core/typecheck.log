@@ -1,0 +1,4 @@
+
+> @bistoon/core@0.1.0 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.test.json
+

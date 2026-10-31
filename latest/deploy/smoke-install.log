@@ -1,0 +1,139 @@
+── نصب تازه
+ Image bistoon:local Building 
+ Image bistoon:local Built 
+ Network bistoon-install_default Creating 
+ Network bistoon-install_default Created 
+ Volume bistoon-install_pgdata Creating 
+ Volume bistoon-install_pgdata Created 
+ Container bistoon-install-db-1 Creating 
+ Container bistoon-install-db-1 Created 
+ Container bistoon-install-app-1 Creating 
+ Container bistoon-install-app-1 Created 
+ Container bistoon-install-db-1 Starting 
+ Container bistoon-install-db-1 Started 
+ Container bistoon-install-db-1 Waiting 
+ Container bistoon-install-db-1 Healthy 
+ Container bistoon-install-app-1 Starting 
+ Container bistoon-install-app-1 Started 
+── استفاده از کد موجود در /home/runner/work/masoud-bistoon/masoud-bistoon
+── ساخت /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/.env
+── ساخت تصویر و راه‌اندازی (بار اول چند دقیقه طول می‌کشد)
+#1 [internal] load local bake definitions
+#1 reading from stdin 551B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.92kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 222B done
+#4 DONE 0.0s
+
+#5 [build  1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+#5 resolve docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 10.04kB 0.0s done
+#6 DONE 0.0s
+
+#7 [build 10/10] RUN npm run build -w @bistoon/web
+#7 CACHED
+
+#8 [build  5/10] COPY apps/api/package.json apps/api/
+#8 CACHED
+
+#9 [runtime  7/11] RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+#9 CACHED
+
+#10 [build  4/10] COPY packages/core/package.json packages/core/
+#10 CACHED
+
+#11 [runtime  8/11] COPY packages/core packages/core
+#11 CACHED
+
+#12 [build  8/10] COPY packages packages
+#12 CACHED
+
+#13 [build  9/10] COPY apps apps
+#13 CACHED
+
+#14 [build  3/10] COPY package.json package-lock.json ./
+#14 CACHED
+
+#15 [runtime  2/11] WORKDIR /app
+#15 CACHED
+
+#16 [build  2/10] WORKDIR /src
+#16 CACHED
+
+#17 [build  6/10] COPY apps/web/package.json apps/web/
+#17 CACHED
+
+#18 [runtime  5/11] COPY apps/api/package.json apps/api/
+#18 CACHED
+
+#19 [runtime  4/11] COPY packages/core/package.json packages/core/
+#19 CACHED
+
+#20 [runtime  3/11] COPY package.json package-lock.json ./
+#20 CACHED
+
+#21 [runtime  6/11] COPY apps/web/package.json apps/web/
+#21 CACHED
+
+#22 [runtime  9/11] COPY apps/api apps/api
+#22 CACHED
+
+#23 [runtime 10/11] COPY db db
+#23 CACHED
+
+#24 [build  7/10] RUN npm ci --no-audit --no-fund
+#24 CACHED
+
+#25 [runtime 11/11] COPY --from=build /src/apps/web/dist apps/web/dist
+#25 CACHED
+
+#26 exporting to image
+#26 exporting layers done
+#26 exporting manifest sha256:24428b955d5983fc84629c30b75f31348785853785fc7d2b6d5f8be8934762dd done
+#26 exporting config sha256:89cbe990a4343597c18d42cf3408c8c472ef736ccdde739de61c7485f0542eee done
+#26 exporting attestation manifest sha256:63348548a68acc01523600de2f612771e3a5a930c21a790959af96936bc0a626 done
+#26 exporting manifest list sha256:f2a4e84bf9bf242d33532a8741f0e882435503bfa4e4402891141b68113f43a1 done
+#26 naming to docker.io/library/bistoon:local done
+#26 unpacking to docker.io/library/bistoon:local done
+#26 DONE 0.1s
+
+#27 resolving provenance for metadata file
+#27 DONE 0.0s
+── انتظار برای سلامت برنامه
+── ساخت ادمین سیستم «admin»
+
+════════════════ نصب بیستون انجام شد ════════════════
+نشانی:  http://127.0.0.1:3010
+نام کاربری:  admin
+گذرواژه‌ی موقت:  ***    ← فقط همین یک بار نمایش داده می‌شود؛ در اولین ورود باید عوض شود.
+ADMIN_USERNAME=admin
+ADMIN_TEMP_PASSWORD=***
+BISTOON_URL=http://127.0.0.1:3010
+
+دستورهای بعدی:
+  پشتیبان‌گیری:    /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/scripts/backup.sh --docker /var/backups/bistoon 30
+  به‌روزرسانی:      cd /home/runner/work/masoud-bistoon/masoud-bistoon && git pull && /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/scripts/update.sh --docker
+  گزارش برنامه:    docker compose -f /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/docker-compose.yml logs -f app
+  راهنمای کامل:    /home/runner/work/masoud-bistoon/masoud-bistoon/deploy/README.md
+── اجرای دوباره (باید بی‌اثر باشد)
+ Image bistoon:local Building 
+ Image bistoon:local Built 
+ Container bistoon-install-db-1 Running 
+ Container bistoon-install-app-1 Recreate 
+ Container bistoon-install-app-1 Recreated 
+ Container bistoon-install-db-1 Waiting 
+ Container bistoon-install-db-1 Healthy 
+ Container bistoon-install-app-1 Starting 
+ Container bistoon-install-app-1 Started 
+آزمون نصب‌کننده موفق بود.

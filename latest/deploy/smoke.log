@@ -1,0 +1,286 @@
+── ساخت و بالاآوردن
+ Image postgres:16-alpine Pulling 
+ 9f477227db48 Pulling fs layer 0B
+ 7b229517ed22 Pulling fs layer 0B
+ f121f7f3dec1 Pulling fs layer 0B
+ 768bbab50810 Pulling fs layer 0B
+ 7ea8819886f9 Pulling fs layer 0B
+ d982e6c592c4 Pulling fs layer 0B
+ d3f6cab92edc Pulling fs layer 0B
+ 911527e7800c Pulling fs layer 0B
+ a735dce41235 Pulling fs layer 0B
+ 22df74fd5323 Pulling fs layer 0B
+ 42065dcfea93 Pulling fs layer 0B
+ 42065dcfea93 Download complete 0B
+ f121f7f3dec1 Downloading 1.049MB
+ 768bbab50810 Download complete 0B
+ 7ea8819886f9 Downloading 9.671kB
+ 22df74fd5323 Downloading 6.108kB
+ 911527e7800c Downloading 169B
+ a735dce41235 Download complete 0B
+ b3e0ec4a3ace Download complete 0B
+ 9f4aa3a44541 Download complete 0B
+ 9f477227db48 Download complete 0B
+ 7b229517ed22 Downloading 1.049MB
+ d982e6c592c4 Downloading 900kB
+ d3f6cab92edc Download complete 0B
+ 7ea8819886f9 Download complete 0B
+ 22df74fd5323 Download complete 0B
+ 911527e7800c Download complete 0B
+ 7b229517ed22 Download complete 0B
+ d982e6c592c4 Download complete 0B
+ f121f7f3dec1 Downloading 7.34MB
+ 7b229517ed22 Extracting 1B
+ f121f7f3dec1 Downloading 14.68MB
+ 42065dcfea93 Pull complete 0B
+ 768bbab50810 Pull complete 0B
+ a735dce41235 Pull complete 0B
+ 7b229517ed22 Pull complete 0B
+ d982e6c592c4 Pull complete 0B
+ f121f7f3dec1 Downloading 42.99MB
+ f121f7f3dec1 Downloading 72.35MB
+ f121f7f3dec1 Downloading 105.9MB
+ f121f7f3dec1 Download complete 0B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 1B
+ f121f7f3dec1 Extracting 2B
+ f121f7f3dec1 Extracting 2B
+ f121f7f3dec1 Extracting 2B
+ f121f7f3dec1 Extracting 2B
+ f121f7f3dec1 Extracting 2B
+ f121f7f3dec1 Extracting 2B
+ f121f7f3dec1 Extracting 2B
+ 9f477227db48 Pull complete 0B
+ d3f6cab92edc Pull complete 0B
+ 7ea8819886f9 Pull complete 0B
+ 22df74fd5323 Pull complete 0B
+ 911527e7800c Pull complete 0B
+ f121f7f3dec1 Pull complete 0B
+ Image postgres:16-alpine Pulled 
+ Image bistoon:local Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 549B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile:
+#2 transferring dockerfile: 1.92kB done
+#2 DONE 0.0s
+
+#3 [auth] library/node:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#4 DONE 0.3s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 222B done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 1.43MB 0.0s done
+#6 DONE 0.1s
+
+#7 [build  1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+#7 resolve docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da 0.0s done
+#7 sha256:0bee45faaffff77eee1e3d151cc650b854df28523ea01e5a2dcc0327da8793a9 448B / 448B 0.0s done
+#7 sha256:709e8267cebf108d59c4e6e386882a5c79c10bbe11ecd02c6ed9ed4efa5b905d 3.31kB / 3.31kB 0.0s done
+#7 sha256:d22dd8aef5082b9de7fb037db9c398ee2822c5c81cc5cbb63bb32a46a5decdb1 1.71MB / 1.71MB 0.0s done
+#7 sha256:df736340692d217b57cd447c94f978f9a91ce3e8805b225e78374eae3aff864c 24.12MB / 49.89MB 0.2s
+#7 sha256:df736340692d217b57cd447c94f978f9a91ce3e8805b225e78374eae3aff864c 49.89MB / 49.89MB 0.3s done
+#7 sha256:3c5439d0ae62993af4cc4e21b8c777297e81bc40e200d4633c85a3e0f977a3bc 28.25MB / 28.25MB 0.2s done
+#7 extracting sha256:3c5439d0ae62993af4cc4e21b8c777297e81bc40e200d4633c85a3e0f977a3bc
+#7 extracting sha256:3c5439d0ae62993af4cc4e21b8c777297e81bc40e200d4633c85a3e0f977a3bc 0.7s done
+#7 DONE 1.0s
+
+#7 [build  1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+#7 extracting sha256:709e8267cebf108d59c4e6e386882a5c79c10bbe11ecd02c6ed9ed4efa5b905d done
+#7 extracting sha256:df736340692d217b57cd447c94f978f9a91ce3e8805b225e78374eae3aff864c
+#7 extracting sha256:df736340692d217b57cd447c94f978f9a91ce3e8805b225e78374eae3aff864c 0.9s done
+#7 DONE 1.9s
+
+#7 [build  1/10] FROM docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+#7 extracting sha256:d22dd8aef5082b9de7fb037db9c398ee2822c5c81cc5cbb63bb32a46a5decdb1 0.0s done
+#7 extracting sha256:0bee45faaffff77eee1e3d151cc650b854df28523ea01e5a2dcc0327da8793a9 done
+#7 DONE 2.0s
+
+#8 [build  2/10] WORKDIR /src
+#8 DONE 1.3s
+
+#9 [runtime  2/11] WORKDIR /app
+#9 DONE 1.3s
+
+#10 [build  3/10] COPY package.json package-lock.json ./
+#10 DONE 0.0s
+
+#11 [runtime  3/11] COPY package.json package-lock.json ./
+#11 DONE 0.0s
+
+#12 [build  4/10] COPY packages/core/package.json packages/core/
+#12 DONE 0.0s
+
+#13 [runtime  4/11] COPY packages/core/package.json packages/core/
+#13 DONE 0.0s
+
+#14 [build  5/10] COPY apps/api/package.json apps/api/
+#14 DONE 0.0s
+
+#15 [runtime  5/11] COPY apps/api/package.json apps/api/
+#15 DONE 0.0s
+
+#16 [build  6/10] COPY apps/web/package.json apps/web/
+#16 DONE 0.0s
+
+#17 [runtime  6/11] COPY apps/web/package.json apps/web/
+#17 DONE 0.0s
+
+#18 [runtime  7/11] RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+#18 2.039 
+#18 2.039 added 86 packages in 2s
+#18 2.041 npm notice
+#18 2.041 npm notice New major version of npm available! 10.9.9 -> 12.2.1
+#18 2.041 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+#18 2.041 npm notice To update run: npm install -g npm@12.2.1
+#18 2.041 npm notice
+#18 2.222 npm warn using --force Recommended protections disabled.
+#18 DONE 2.6s
+
+#19 [build  7/10] RUN npm ci --no-audit --no-fund
+#19 ...
+
+#20 [runtime  8/11] COPY packages/core packages/core
+#20 DONE 0.1s
+
+#21 [runtime  9/11] COPY apps/api apps/api
+#21 DONE 0.0s
+
+#22 [runtime 10/11] COPY db db
+#22 DONE 0.0s
+
+#19 [build  7/10] RUN npm ci --no-audit --no-fund
+#19 3.105 
+#19 3.105 added 156 packages in 3s
+#19 3.106 npm notice
+#19 3.106 npm notice New major version of npm available! 10.9.9 -> 12.2.1
+#19 3.106 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+#19 3.106 npm notice To update run: npm install -g npm@12.2.1
+#19 3.106 npm notice
+#19 DONE 3.2s
+
+#23 [build  8/10] COPY packages packages
+#23 DONE 0.1s
+
+#24 [build  9/10] COPY apps apps
+#24 DONE 0.0s
+
+#25 [build 10/10] RUN npm run build -w @bistoon/web
+#25 0.254 
+#25 0.254 > @bistoon/web@0.1.0 build
+#25 0.254 > node build.mjs
+#25 0.254 
+#25 0.313 ▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+#25 0.313 
+#25 0.313     tsconfig.json:2:13:
+#25 0.313       2 │   "extends": "../../tsconfig.base.json",
+#25 0.313         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#25 0.313 
+#25 0.325 ▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+#25 0.325 
+#25 0.325     ../../packages/core/tsconfig.json:2:13:
+#25 0.325       2 │   "extends": "../../tsconfig.base.json",
+#25 0.325         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#25 0.325 
+#25 0.409 2 warnings
+#25 0.409 
+#25 0.409   dist/assets/app-NY2Q6DUD.js                   769.4kb
+#25 0.409   dist/assets/Vazirmatn-Medium-FSCVJPNL.woff2    49.9kb
+#25 0.409   dist/assets/Vazirmatn-Bold-BN5SB5QC.woff2      49.8kb
+#25 0.409   dist/assets/Vazirmatn-Regular-O6SSCPTM.woff2   49.5kb
+#25 0.409   dist/assets/app-MNOXWV4S.css                   26.0kb
+#25 0.409 
+#25 0.409 ⚡ Done in 99ms
+#25 DONE 0.4s
+
+#26 [runtime 11/11] COPY --from=build /src/apps/web/dist apps/web/dist
+#26 DONE 0.0s
+
+#27 exporting to image
+#27 exporting layers
+#27 exporting layers 0.6s done
+#27 exporting manifest sha256:4a181ff79e981dbe6b46ac67d0f7241c238904086b6a60cbbc2921f875e3cafb done
+#27 exporting config sha256:93dd260740b35dbc2bba4c4b392ee7d170fee982932c4f91c9df47412347ef89 done
+#27 exporting attestation manifest sha256:4ae4000e8fac5e1aade065444ec85991816dfef0357d45688d2bf27701271eab done
+#27 exporting manifest list sha256:956a2097dad9bd222e205e2d933033c1f88fb5b5909e18e2f1b43f9678b74358 done
+#27 naming to docker.io/library/bistoon:local done
+#27 unpacking to docker.io/library/bistoon:local
+#27 unpacking to docker.io/library/bistoon:local 0.4s done
+#27 DONE 1.0s
+
+#28 resolving provenance for metadata file
+#28 DONE 0.0s
+ Image bistoon:local Built 
+ Network bistoon-smoke_default Creating 
+ Network bistoon-smoke_default Created 
+ Volume bistoon-smoke_pgdata Creating 
+ Volume bistoon-smoke_pgdata Created 
+ Container bistoon-smoke-db-1 Creating 
+ Container bistoon-smoke-db-1 Created 
+ Container bistoon-smoke-app-1 Creating 
+ Container bistoon-smoke-app-1 Created 
+ Container bistoon-smoke-db-1 Starting 
+ Container bistoon-smoke-db-1 Started 
+ Container bistoon-smoke-db-1 Waiting 
+ Container bistoon-smoke-db-1 Healthy 
+ Container bistoon-smoke-app-1 Starting 
+ Container bistoon-smoke-app-1 Started 
+── انتظار برای سلامت برنامه
+── ساخت ادمین سیستم
+ادمین سیستم ساخته شد: smoke
+── ورود
+── رابط کاربری و مسیر SPA
+── هدرهای امنیتی
+── پشتیبان‌گیری
+── حذف داده‌ی نمونه و بازیابی
+NOTICE:  truncate cascades to table "sessions"
+NOTICE:  truncate cascades to table "projects"
+NOTICE:  truncate cascades to table "project_members"
+NOTICE:  truncate cascades to table "resources"
+NOTICE:  truncate cascades to table "tasks"
+NOTICE:  truncate cascades to table "baselines"
+NOTICE:  truncate cascades to table "snapshots"
+NOTICE:  truncate cascades to table "cost_entries"
+NOTICE:  truncate cascades to table "project_charter"
+NOTICE:  truncate cascades to table "project_contract"
+NOTICE:  truncate cascades to table "risks"
+NOTICE:  truncate cascades to table "issues"
+NOTICE:  truncate cascades to table "change_requests"
+NOTICE:  truncate cascades to table "decisions"
+NOTICE:  truncate cascades to table "project_documents"
+NOTICE:  truncate cascades to table "chat_messages"
+NOTICE:  truncate cascades to table "legacy_imports"
+NOTICE:  truncate cascades to table "payments"
+NOTICE:  truncate cascades to table "procurement_items"
+NOTICE:  truncate cascades to table "project_counters"
+NOTICE:  truncate cascades to table "project_workdays"
+NOTICE:  truncate cascades to table "project_holidays"
+NOTICE:  truncate cascades to table "task_dependencies"
+NOTICE:  truncate cascades to table "task_assignments"
+NOTICE:  truncate cascades to table "task_direct_costs"
+NOTICE:  truncate cascades to table "baseline_items"
+NOTICE:  truncate cascades to table "snapshot_tasks"
+ Container bistoon-smoke-app-1 Stopping 
+ Container bistoon-smoke-app-1 Stopped 
+ Container bistoon-smoke-db-1 Waiting 
+ Container bistoon-smoke-db-1 Healthy 
+ Container bistoon-smoke-app-1 Starting 
+ Container bistoon-smoke-app-1 Started 
+── ورود پس از بازیابی
+آزمون دودی استقرار Docker موفق بود.

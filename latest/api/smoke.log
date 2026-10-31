@@ -1,0 +1,4 @@
+ادمین سیستم ساخته شد: smoke
+{"t":"2026-10-31T09:02:43.371Z","level":"info","msg":"listening","host":"127.0.0.1","port":3386}
+smoke OK
+{"t":"2026-10-31T09:02:43.566Z","level":"info","msg":"shutting down","signal":"SIGTERM"}

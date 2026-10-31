@@ -1,0 +1,5 @@
+migration: db/migrations/0001_init.sql
+migration: db/migrations/0002_task_recurrence.sql
+migration: db/migrations/0003_doc_control_payments_procurement.sql
+ passed checks: 65
+
