@@ -78,7 +78,7 @@ export function importExportRouter(pool: Pool): Router {
     if (!repaired.ok) throw badRequest(repaired.error, undefined, 'IMPORT_INVALID');
     const user = actorOf(req);
     const m = repaired.model;
-    const summary = { tasks: m.tasks.length, resources: m.resources.length, costs: m.costs.length, risks: m.risks.length, issues: m.issues.length, changes: m.changes.length, decisions: m.decisions.length, documents: m.documents.length, snapshots: m.snapshots.length, baselineItems: Object.keys(m.baseline).length, baselineHistory: m.baselineHistory.length };
+    const summary = { tasks: m.tasks.length, resources: m.resources.length, costs: m.costs.length, risks: m.risks.length, issues: m.issues.length, changes: m.changes.length, decisions: m.decisions.length, documents: m.documents.length, payments: m.payments.length, procurement: m.procurement.length, snapshots: m.snapshots.length, baselineItems: Object.keys(m.baseline).length, baselineHistory: m.baselineHistory.length };
     // پیش‌نمایش: اعتبارسنجی کامل ولی بدون نوشتن. بازیابی همیشه پروژه‌ی «جدید» می‌سازد و کاربران/نقش‌ها را وارد نمی‌کند.
     if (req.query['dryRun'] === '1') {
       const doc = (req.body ?? {}) as { exportedAt?: unknown; exportedBy?: unknown; version?: unknown };
@@ -113,6 +113,8 @@ export function importExportRouter(pool: Pool): Router {
       const c: Contract = model.contract;
       model.contract = { ...c, salesApproval: null, salesCommissionPercent: 0, retentionCommissionPercent: 0 };
     }
+    if (!access.capabilities.includes('payments.view')) model.payments = [];
+    if (!access.capabilities.includes('procurement.view')) model.procurement = [];
     if (!access.capabilities.includes('costs.view')) {
       model.costs = [];
       model.snapshots = model.snapshots.map(({ actualCost: _c, ...s }) => s);

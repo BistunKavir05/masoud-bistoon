@@ -188,7 +188,34 @@ export function repairForStorage(input: ProjectModel): RepairResult {
   const issues = uniqueIds(input.issues, 'مسئله');
   const changes = uniqueIds(input.changes, 'درخواست تغییر');
   const decisions = uniqueIds(input.decisions, 'تصمیم');
-  const documents = uniqueIds(input.documents, 'سند').map((d) => ({ ...d, taskId: d.taskId !== null && taskIds.has(d.taskId) ? d.taskId : null, title: d.title.slice(0, 200) }));
+  const documents = uniqueIds(input.documents, 'سند').map((d) => ({
+    ...d,
+    taskId: d.taskId !== null && taskIds.has(d.taskId) ? d.taskId : null,
+    title: d.title.slice(0, 200),
+    sender: d.sender.slice(0, 120),
+    receiver: d.receiver.slice(0, 120),
+    number: d.number.slice(0, 60),
+    revision: d.revision.slice(0, 30),
+  }));
+  const money = (v: number): number => (Number.isFinite(v) ? Math.max(0, v) : 0);
+  const payments = uniqueIds(input.payments, 'صورت‌وضعیت').map((p) => ({
+    ...p,
+    number: p.number.slice(0, 40),
+    title: p.title.slice(0, 200),
+    sentAmount: money(p.sentAmount),
+    approvedAmount: p.approvedAmount === null ? null : money(p.approvedAmount),
+    receivedAmount: money(p.receivedAmount),
+    notes: p.notes.slice(0, 2000),
+  }));
+  const procurement = uniqueIds(input.procurement, 'قلم تدارکات').map((p) => ({
+    ...p,
+    item: p.item.slice(0, 200),
+    supplier: p.supplier.slice(0, 200),
+    orderNumber: p.orderNumber.slice(0, 60),
+    amount: money(p.amount),
+    taskId: p.taskId !== null && taskIds.has(p.taskId) ? p.taskId : null,
+    notes: p.notes.slice(0, 2000),
+  }));
 
   // قرارداد
   const c = input.contract;
@@ -222,6 +249,8 @@ export function repairForStorage(input: ProjectModel): RepairResult {
       changes,
       decisions,
       documents,
+      payments,
+      procurement,
       contract,
       snapshots: [...snapByDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1)),
       finance: { ...input.finance, unit: input.finance.unit.slice(0, 24) || 'ریال', budget: Math.max(0, input.finance.budget) },

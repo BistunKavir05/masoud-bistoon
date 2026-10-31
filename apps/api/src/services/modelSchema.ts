@@ -1,9 +1,23 @@
 import { z } from 'zod';
-import { CHANGE_STATUSES, DECISION_STATUSES, DOCUMENT_TYPES, ISSUE_PRIORITIES, ISSUE_STATUSES, RISK_CATEGORIES, RISK_STATUSES, RISK_STRATEGIES, emptyContract } from '@bistoon/core';
+import {
+  CHANGE_STATUSES,
+  DECISION_STATUSES,
+  DOCUMENT_STATUSES,
+  DOCUMENT_TYPES,
+  ISSUE_PRIORITIES,
+  ISSUE_STATUSES,
+  PAYMENT_STATUSES,
+  PROCUREMENT_STATUSES,
+  RISK_CATEGORIES,
+  RISK_STATUSES,
+  RISK_STRATEGIES,
+  emptyContract,
+} from '@bistoon/core';
 import type { ProjectModel } from '@bistoon/core';
 import { isoDate, isoDateOrNull } from '../schemas.ts';
 
 const num = z.number().finite();
+const money = z.number().finite().min(0).max(1e15);
 const str = (max = 20000) => z.string().max(max);
 const idNum = z.number().int().min(1).max(2_000_000_000);
 
@@ -181,12 +195,52 @@ const modelSchema = z.object({
         title: str(200),
         type: z.enum(DOCUMENT_TYPES),
         url: str(2000),
+        sender: str(120).default(''),
+        receiver: str(120).default(''),
+        number: str(60).default(''),
+        revision: str(30).default(''),
+        status: z.enum(DOCUMENT_STATUSES).nullable().default(null),
         taskId: idNum.nullable(),
         date: isoDateOrNull,
         addedBy: str(100).default(''),
       }),
     )
     .max(20000),
+  payments: z
+    .array(
+      z.object({
+        id: idNum,
+        number: str(40),
+        title: str(200),
+        sentDate: isoDateOrNull,
+        sentAmount: money,
+        approvedAmount: money.nullable(),
+        receivedAmount: money,
+        receivedDate: isoDateOrNull,
+        status: z.enum(PAYMENT_STATUSES),
+        notes: str(2000),
+      }),
+    )
+    .max(20000)
+    .default([]),
+  procurement: z
+    .array(
+      z.object({
+        id: idNum,
+        item: str(200),
+        taskId: idNum.nullable(),
+        supplier: str(200),
+        orderNumber: str(60),
+        amount: money,
+        orderDate: isoDateOrNull,
+        plannedDelivery: isoDateOrNull,
+        actualDelivery: isoDateOrNull,
+        status: z.enum(PROCUREMENT_STATUSES),
+        notes: str(2000),
+      }),
+    )
+    .max(20000)
+    .default([]),
 });
 
 export const EXPORT_FORMAT = 'bistoon-project';

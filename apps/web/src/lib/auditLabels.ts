@@ -10,6 +10,8 @@ export const ENTITY_LABELS: Record<string, string> = {
   baseline: 'خط مبنا',
   snapshot: 'گزارش پیشرفت',
   document: 'سند',
+  payment: 'صورت‌وضعیت',
+  procurement: 'قلم تدارکات',
   risk: 'ریسک',
   issue: 'مسئله',
   change: 'درخواست تغییر',
@@ -168,6 +170,22 @@ const FIELD_LABELS: Record<string, string> = {
   topic: 'موضوع',
   text: 'متن',
   maker: 'تصمیم‌گیرنده',
+  // کنترل مدارک، صورت‌وضعیت، تدارکات
+  sender: 'ارسال‌کننده',
+  receiver: 'دریافت‌کننده',
+  revision: 'ویرایش (Revision)',
+  sentDate: 'تاریخ ارسال',
+  sentAmount: 'مبلغ ارسالی',
+  approvedAmount: 'مبلغ تأییدشده',
+  receivedAmount: 'مبلغ دریافتی',
+  receivedDate: 'تاریخ دریافت',
+  notes: 'توضیحات',
+  item: 'قلم / خدمت',
+  supplier: 'تأمین‌کننده',
+  orderNumber: 'شماره‌ی سفارش',
+  orderDate: 'تاریخ سفارش',
+  plannedDelivery: 'تحویل برنامه‌ای',
+  actualDelivery: 'تحویل واقعی',
 };
 
 export const fieldLabel = (f: string): string => FIELD_LABELS[f] ?? f;

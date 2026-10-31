@@ -51,6 +51,8 @@ function blank(tasks: Task[], extra: Partial<ProjectModel> = {}): ProjectModel {
     changes: [],
     decisions: [],
     documents: [],
+    payments: [],
+    procurement: [],
     ...extra,
   };
 }
@@ -279,7 +281,7 @@ describe('ورود MSP به پروژه‌ی موجود: برنامه‌ی ورو
 
   it('اثر بر هر دسته از داده نوشته می‌شود و داده‌ی دیگر دست‌نخورده است', () => {
     const m = blank([task({ id: 1, name: 'الف' }), task({ id: 2, name: 'ب' })], {
-      documents: [{ id: 1, title: 'نقشه', type: 'drawing', url: 'https://x.test', taskId: 2, date: null, addedBy: '' }],
+      documents: [{ id: 1, title: 'نقشه', type: 'drawing', url: 'https://x.test', sender: '', receiver: '', number: '', revision: '', status: null, taskId: 2, date: null, addedBy: '' }],
       snapshots: [{ date: '2026-09-02', actual: 10, estimated: false }],
       costs: [],
     });

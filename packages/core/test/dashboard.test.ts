@@ -30,6 +30,8 @@ function model(over: Partial<ProjectModel> = {}): ProjectModel {
     changes: [],
     decisions: [],
     documents: [],
+    payments: [],
+    procurement: [],
     ...over,
   };
 }

@@ -124,15 +124,32 @@ describe('CSV ریسک، مسئله، تغییر، تصمیم، مستندات،
   it('مستندات: فعالیت با WBS و نام؛ سند بدون فعالیت ستون خالی', () => {
     const m = model();
     m.documents = [
-      { id: 1, title: 'قرارداد', type: 'contract', url: 'https://example.com/a.pdf', taskId: m.tasks[1]!.id, date: '2026-09-01', addedBy: 'x' },
-      { id: 2, title: 'گزارش', type: 'report', url: 'https://example.com/b.pdf', taskId: null, date: null, addedBy: 'x' },
+      { id: 1, title: 'قرارداد', type: 'contract', url: 'https://example.com/a.pdf', sender: 'کارفرما', receiver: 'پیمانکار', number: 'C-1', revision: 'A', status: 'approved', taskId: m.tasks[1]!.id, date: '2026-09-01', addedBy: 'x' },
+      { id: 2, title: 'گزارش', type: 'report', url: '', sender: '', receiver: '', number: '', revision: '', status: null, taskId: null, date: null, addedBy: 'x' },
     ];
     const rows = parse((buildCsv('documents', m, null, { canSeeCosts: false }) as { text: string }).text);
-    expect(rows[0]).toEqual(['عنوان', 'نوع', 'لینک', 'فعالیت', 'تاریخ', 'تاریخ شمسی']);
+    expect(rows[0]).toEqual(['عنوان', 'نوع', 'لینک', 'فعالیت', 'تاریخ', 'تاریخ شمسی', 'شماره', 'ویرایش', 'ارسال‌کننده', 'دریافت‌کننده', 'وضعیت']);
+    expect(rows[1]!.slice(6)).toEqual(['C-1', 'A', 'کارفرما', 'پیمانکار', 'تأییدشده']);
+    expect(rows[2]!.slice(6)).toEqual(['', '', '', '', '']);
     expect(rows[1]![1]).toBe('قرارداد');
     expect(rows[1]![3].startsWith('1.1 ')).toBe(true);
     expect(rows[2]![3]).toBe('');
     expect(rows[2]![4]).toBe('');
+  });
+
+  it('صورت‌وضعیت‌ها و تدارکات: مانده و تأخیر محاسبه‌شده و تاریخ‌ها ISO و شمسی', () => {
+    const m = model();
+    m.payments = [{ id: 1, number: '۱', title: 'اول', sentDate: '2026-09-01', sentAmount: 1000, approvedAmount: 900, receivedAmount: 400, receivedDate: '2026-09-10', status: 'approved', notes: '' }];
+    m.procurement = [{ id: 1, item: 'پمپ', taskId: m.tasks[1]!.id, supplier: 'الف', orderNumber: 'PO-1', amount: 50, orderDate: null, plannedDelivery: '2026-09-01', actualDelivery: null, status: 'ordered', notes: '' }];
+    const pay = parse((buildCsv('payments', m, null, { canSeeCosts: false }) as { text: string }).text);
+    expect(pay[1]![2]).toBe('2026-09-01');
+    expect(pay[1]!.slice(4, 7)).toEqual(['1000', '900', '400']);
+    expect(pay[1]![9]).toBe('500');
+    expect(pay[1]![10]).toBe('تأییدشده');
+    const pro = parse((buildCsv('procurement', m, null, { canSeeCosts: false }) as { text: string }).text);
+    expect(pro[1]![1].startsWith('1.1 ')).toBe(true);
+    expect(pro[1]![11]).toBe('سفارش‌گذاری');
+    expect(Number(pro[1]![12])).toBeGreaterThan(0);
   });
 
   it('هزینه‌ها: بدون دسترسی مالی فقط BOM؛ با دسترسی به ترتیب تاریخ و با WBS', () => {

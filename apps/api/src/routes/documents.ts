@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
-import { DOCUMENT_TYPES } from '@bistoon/core';
+import { DOCUMENT_STATUSES, DOCUMENT_TYPES } from '@bistoon/core';
 import { actorInfo, diffFields, writeAudit } from '../audit.ts';
 import type { Db } from '../db.ts';
 import { one, withTx } from '../db.ts';
@@ -24,9 +24,22 @@ const url = z
       return false;
     }
   }, 'نشانی باید با http:// یا https:// شروع شود.');
+/** لینک اختیاری است: مدرک کاغذی یا نامه لینک ندارد */
+const optionalUrl = z.union([z.literal(''), url]);
 
-const fields = { title: text(200).min(1), type: z.enum(DOCUMENT_TYPES), url, taskId: posInt.nullable(), date: isoDateOrNull };
-const createSchema = z.object(fields).partial({ type: true, taskId: true, date: true }).strict();
+const fields = {
+  title: text(200).min(1),
+  type: z.enum(DOCUMENT_TYPES),
+  url: optionalUrl,
+  sender: text(120),
+  receiver: text(120),
+  number: text(60),
+  revision: text(30),
+  status: z.enum(DOCUMENT_STATUSES).nullable(),
+  taskId: posInt.nullable(),
+  date: isoDateOrNull,
+};
+const createSchema = z.object(fields).partial({ type: true, url: true, sender: true, receiver: true, number: true, revision: true, status: true, taskId: true, date: true }).strict();
 const patchSchema = z.object(fields).partial().strict();
 
 async function assertTask(tx: Db, pid: number, taskId: number | null | undefined): Promise<void> {
@@ -45,16 +58,10 @@ export function documentsRouter(pool: Pool): Router {
     const item = await withTx(pool, async (tx) => {
       await assertTask(tx, access.id, b.taskId);
       const id = (await one<{ n: number }>(tx, 'SELECT next_seq($1, $2) AS n', [access.id, 'document']))!.n;
-      await tx.query('INSERT INTO project_documents (project_id, id, title, doc_type, url, task_id, doc_date, added_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)', [
-        access.id,
-        id,
-        b.title,
-        b.type ?? 'other',
-        b.url,
-        b.taskId ?? null,
-        b.date ?? null,
-        actorOf(req).id,
-      ]);
+      await tx.query(
+        'INSERT INTO project_documents (project_id, id, title, doc_type, url, sender, receiver, doc_number, revision, doc_status, task_id, doc_date, added_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+        [access.id, id, b.title, b.type ?? 'other', b.url ?? '', b.sender ?? '', b.receiver ?? '', b.number ?? '', b.revision ?? '', b.status ?? null, b.taskId ?? null, b.date ?? null, actorOf(req).id],
+      );
       const created = (await loadDocuments(tx, access.id)).find((x) => x.id === id)!;
       await writeAudit(tx, actorInfo(req), { projectId: access.id, action: 'document.create', entity: 'document', entityId: id, newValue: created });
       return created;
@@ -70,17 +77,25 @@ export function documentsRouter(pool: Pool): Router {
       const before = (await loadDocuments(tx, access.id)).find((x) => x.id === id);
       if (!before) throw notFound('سند پیدا نشد.', 'NOT_FOUND');
       if (b.taskId !== undefined) await assertTask(tx, access.id, b.taskId);
-      await tx.query('UPDATE project_documents SET title = $3, doc_type = $4, url = $5, task_id = $6, doc_date = $7 WHERE project_id = $1 AND id = $2', [
-        access.id,
-        id,
-        b.title ?? before.title,
-        b.type ?? before.type,
-        b.url ?? before.url,
-        b.taskId === undefined ? before.taskId : b.taskId,
-        b.date === undefined ? before.date : b.date,
-      ]);
+      await tx.query(
+        'UPDATE project_documents SET title = $3, doc_type = $4, url = $5, sender = $6, receiver = $7, doc_number = $8, revision = $9, doc_status = $10, task_id = $11, doc_date = $12 WHERE project_id = $1 AND id = $2',
+        [
+          access.id,
+          id,
+          b.title ?? before.title,
+          b.type ?? before.type,
+          b.url ?? before.url,
+          b.sender ?? before.sender,
+          b.receiver ?? before.receiver,
+          b.number ?? before.number,
+          b.revision ?? before.revision,
+          b.status === undefined ? before.status : b.status,
+          b.taskId === undefined ? before.taskId : b.taskId,
+          b.date === undefined ? before.date : b.date,
+        ],
+      );
       const after = (await loadDocuments(tx, access.id)).find((x) => x.id === id)!;
-      const changes = diffFields(before as never, after as never, ['title', 'type', 'url', 'taskId', 'date']);
+      const changes = diffFields(before as never, after as never, ['title', 'type', 'url', 'sender', 'receiver', 'number', 'revision', 'status', 'taskId', 'date']);
       await writeAudit(tx, actorInfo(req), changes.map((c) => ({ projectId: access.id, action: 'document.update', entity: 'document', entityId: id, field: c.field, oldValue: c.from, newValue: c.to })));
       return after;
     });

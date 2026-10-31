@@ -5,7 +5,9 @@ import { CharterTab } from './charter/CharterTab.tsx';
 import { ChatTab } from './chat/ChatTab.tsx';
 import { DocsTab } from './docs/DocsTab.tsx';
 import { LogTab } from './log/LogTab.tsx';
+import { PaymentsTab } from './payments/PaymentsTab.tsx';
 import { PortfolioTab } from './portfolio/PortfolioTab.tsx';
+import { ProcurementTab } from './procurement/ProcurementTab.tsx';
 import { ReportTab } from './report/ReportTab.tsx';
 import { UsersTab } from './users/UsersTab.tsx';
 import { DashboardTab } from './dashboard/DashboardTab.tsx';
@@ -37,6 +39,10 @@ export function TabView({ tab }: { tab: TabKey }) {
       return <CalendarTab />;
     case 'docs':
       return <DocsTab />;
+    case 'pay':
+      return <PaymentsTab />;
+    case 'proc':
+      return <ProcurementTab />;
     case 'chat':
       return <ChatTab />;
     case 'log':

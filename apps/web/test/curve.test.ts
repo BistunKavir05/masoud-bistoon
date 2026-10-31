@@ -291,6 +291,8 @@ describe('روی منحنی S واقعیِ برنامه', () => {
       changes: [],
       decisions: [],
       documents: [],
+      payments: [],
+      procurement: [],
     };
     const a = analyzeProject(m);
     if (!('schedule' in a)) throw new Error('cycle');

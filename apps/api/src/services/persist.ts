@@ -87,7 +87,24 @@ export async function persistModel(db: Db, pid: number, m: ProjectModel, userId:
   }
   await bump(db, pid, 'decision', m.decisions);
   for (const d of m.documents) {
-    await db.query('INSERT INTO project_documents (project_id, id, title, doc_type, url, task_id, doc_date, added_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)', [pid, d.id, d.title, d.type, d.url, d.taskId, d.date, null]);
+    await db.query(
+      'INSERT INTO project_documents (project_id, id, title, doc_type, url, sender, receiver, doc_number, revision, doc_status, task_id, doc_date, added_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+      [pid, d.id, d.title, d.type, d.url, d.sender, d.receiver, d.number, d.revision, d.status, d.taskId, d.date, null],
+    );
   }
   await bump(db, pid, 'document', m.documents);
+  for (const p of m.payments) {
+    await db.query(
+      'INSERT INTO payments (project_id, id, number, title, sent_date, sent_amount, approved_amount, received_amount, received_date, status, notes, updated_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+      [pid, p.id, p.number, p.title, p.sentDate, p.sentAmount, p.approvedAmount, p.receivedAmount, p.receivedDate, p.status, p.notes, userId],
+    );
+  }
+  await bump(db, pid, 'payment', m.payments);
+  for (const p of m.procurement) {
+    await db.query(
+      'INSERT INTO procurement_items (project_id, id, item, task_id, supplier, order_number, amount, order_date, planned_delivery, actual_delivery, status, notes, updated_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+      [pid, p.id, p.item, p.taskId, p.supplier, p.orderNumber, p.amount, p.orderDate, p.plannedDelivery, p.actualDelivery, p.status, p.notes, userId],
+    );
+  }
+  await bump(db, pid, 'procurement', m.procurement);
 }

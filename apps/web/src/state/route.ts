@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-export const TAB_KEYS = ['dash', 'gantt', 'tasks', 'res', 'chr', 'fin', 'scurve', 'ri', 'chg', 'dec', 'cal', 'rep', 'chat', 'docs', 'usr', 'port', 'log'] as const;
+export const TAB_KEYS = ['dash', 'gantt', 'tasks', 'res', 'chr', 'fin', 'scurve', 'ri', 'chg', 'dec', 'cal', 'rep', 'chat', 'docs', 'pay', 'proc', 'usr', 'port', 'log'] as const;
 export type TabKey = (typeof TAB_KEYS)[number];
 
 export interface Route {

@@ -6,6 +6,7 @@ import { faInt, faMoney, faNum, faPct, faRatio, faSigned } from '../../lib/fmt.t
 import { reloadProject, useCan, useProjectState } from '../../state/project.ts';
 import { Alert, Badge, Btn, Card, Empty, Kpi, NumberField, PageHead, SelectField, TabBar, TextField, useAction } from '../../ui/controls.tsx';
 import { openDialog } from '../../ui/dialogs.tsx';
+import { EvmTrend } from './EvmTrend.tsx';
 import { Ledger } from './Ledger.tsx';
 
 const EAC_LABELS: Record<EacMethod, string> = {
@@ -133,6 +134,8 @@ export function FinanceTab() {
               ) : null}
             </p>
           </Card>
+
+          <EvmTrend />
 
           <Card title="فعالیت‌های دارای هزینه">
             {rows.length === 0 ? (

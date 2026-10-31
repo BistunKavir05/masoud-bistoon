@@ -15,6 +15,8 @@ import type {
   CostEntryDto,
   DecisionDto,
   DocumentDto,
+  PaymentDto,
+  ProcurementItemDto,
   IssueDto,
   IsoDate,
   ProjectModel,
@@ -537,14 +539,62 @@ export async function loadDecisions(db: Db, pid: number): Promise<DecisionDto[]>
 }
 
 export async function loadDocuments(db: Db, pid: number): Promise<DocumentDto[]> {
-  const rows = await many<{ id: number; title: string; doc_type: DocumentDto['type']; url: string; task_id: number | null; doc_date: IsoDate | null; added_by_name: string | null }>(
+  const rows = await many<Record<string, unknown>>(
     db,
-    `SELECT d.id, d.title, d.doc_type, d.url, d.task_id, d.doc_date, u.display_name AS added_by_name
+    `SELECT d.id, d.title, d.doc_type, d.url, d.sender, d.receiver, d.doc_number, d.revision, d.doc_status, d.task_id, d.doc_date, u.display_name AS added_by_name
        FROM project_documents d LEFT JOIN users u ON u.id = d.added_by
       WHERE d.project_id = $1 ORDER BY d.id`,
     [pid],
   );
-  return rows.map((r) => ({ id: r.id, title: r.title, type: r.doc_type, url: r.url, taskId: r.task_id, date: r.doc_date, addedBy: r.added_by_name ?? '' }));
+  return rows.map((r) => ({
+    id: Number(r['id']),
+    title: String(r['title']),
+    type: r['doc_type'] as DocumentDto['type'],
+    url: String(r['url']),
+    sender: String(r['sender']),
+    receiver: String(r['receiver']),
+    number: String(r['doc_number']),
+    revision: String(r['revision']),
+    status: (r['doc_status'] as DocumentDto['status']) ?? null,
+    taskId: r['task_id'] === null ? null : Number(r['task_id']),
+    date: (r['doc_date'] as IsoDate | null) ?? null,
+    addedBy: (r['added_by_name'] as string | null) ?? '',
+  }));
+}
+
+export async function loadPayments(db: Db, pid: number): Promise<PaymentDto[]> {
+  const rows = await many<Record<string, unknown>>(db, 'SELECT * FROM payments WHERE project_id = $1 ORDER BY id', [pid]);
+  return rows.map((r) => ({
+    id: Number(r['id']),
+    number: String(r['number']),
+    title: String(r['title']),
+    sentDate: (r['sent_date'] as IsoDate | null) ?? null,
+    sentAmount: Number(r['sent_amount']),
+    approvedAmount: r['approved_amount'] === null ? null : Number(r['approved_amount']),
+    receivedAmount: Number(r['received_amount']),
+    receivedDate: (r['received_date'] as IsoDate | null) ?? null,
+    status: r['status'] as PaymentDto['status'],
+    notes: String(r['notes']),
+    version: Number(r['version']),
+  }));
+}
+
+export async function loadProcurement(db: Db, pid: number): Promise<ProcurementItemDto[]> {
+  const rows = await many<Record<string, unknown>>(db, 'SELECT * FROM procurement_items WHERE project_id = $1 ORDER BY id', [pid]);
+  return rows.map((r) => ({
+    id: Number(r['id']),
+    item: String(r['item']),
+    taskId: r['task_id'] === null ? null : Number(r['task_id']),
+    supplier: String(r['supplier']),
+    orderNumber: String(r['order_number']),
+    amount: Number(r['amount']),
+    orderDate: (r['order_date'] as IsoDate | null) ?? null,
+    plannedDelivery: (r['planned_delivery'] as IsoDate | null) ?? null,
+    actualDelivery: (r['actual_delivery'] as IsoDate | null) ?? null,
+    status: r['status'] as ProcurementItemDto['status'],
+    notes: String(r['notes']),
+    version: Number(r['version']),
+  }));
 }
 
 // ───────────────────────── مدل کامل ─────────────────────────
@@ -562,6 +612,8 @@ export interface FullModel {
   issues: IssueDto[];
   changes: ChangeRequestDto[];
   decisions: DecisionDto[];
+  payments: PaymentDto[];
+  procurement: ProcurementItemDto[];
   costs: CostEntryDto[];
 }
 
@@ -581,6 +633,8 @@ export async function loadFullModel(db: Db, pid: number): Promise<FullModel> {
   const changes = await loadChanges(db, pid);
   const decisions = await loadDecisions(db, pid);
   const documents = await loadDocuments(db, pid);
+  const payments = await loadPayments(db, pid);
+  const procurement = await loadProcurement(db, pid);
   const { version: _cv, ...charter } = charterDto;
   const { version: _kv, ...contract } = contractDto;
   const stripVersion = <T extends { version: number }>(list: T[]): Omit<T, 'version'>[] => list.map(({ version: _v, ...rest }) => rest);
@@ -604,6 +658,8 @@ export async function loadFullModel(db: Db, pid: number): Promise<FullModel> {
     changes: stripVersion(changes) as ProjectModel['changes'],
     decisions: stripVersion(decisions) as ProjectModel['decisions'],
     documents,
+    payments: stripVersion(payments) as ProjectModel['payments'],
+    procurement: stripVersion(procurement) as ProjectModel['procurement'],
   };
-  return { project, model, tasks, resources, baseline: current, baselineHistory: history, charterDto, contractDto, risks, issues, changes, decisions, costs };
+  return { project, model, tasks, resources, baseline: current, baselineHistory: history, charterDto, contractDto, risks, issues, changes, decisions, payments, procurement, costs };
 }

@@ -50,6 +50,8 @@ export async function buildBundle(pool: Pool, req: Request): Promise<ModelBundle
     bundle.decisions = full.decisions;
   }
   if (has('documents.view')) bundle.documents = await loadDocuments(db, access.id);
+  if (has('payments.view')) bundle.payments = full.payments;
+  if (has('procurement.view')) bundle.procurement = full.procurement;
   return bundle;
 }
 

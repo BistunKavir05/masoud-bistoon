@@ -274,6 +274,64 @@ describe('اسناد', () => {
   });
 });
 
+describe('کنترل مدارک', () => {
+  it('نامه‌ی بدون لینک با ارسال‌کننده، دریافت‌کننده، شماره، ویرایش و وضعیت', async () => {
+    const r = await w.pm.post(url('/documents'), { title: 'نامه‌ی تأیید نقشه', type: 'letter', sender: 'کارفرما', receiver: 'پیمانکار', number: 'ن-۱۲', revision: 'B', status: 'received', date: '2026-04-05' });
+    expect(r.status).toBe(201);
+    expect(r.body.item).toMatchObject({ type: 'letter', url: '', sender: 'کارفرما', receiver: 'پیمانکار', number: 'ن-۱۲', revision: 'B', status: 'received' });
+    const up = await w.pm.patch(url(`/documents/${r.body.item.id}`), { status: 'approved', revision: 'C' });
+    expect(up.body.item).toMatchObject({ status: 'approved', revision: 'C', sender: 'کارفرما' });
+    expect((await w.pm.patch(url(`/documents/${r.body.item.id}`), { status: null })).body.item.status).toBeNull();
+    expect((await w.pm.post(url('/documents'), { title: 'x', status: 'weird' })).status).toBe(400);
+    expect((await w.pm.post(url('/documents'), { title: 'x', url: 'javascript:alert(1)' })).status).toBe(400);
+    expect((await w.pm.del(url(`/documents/${r.body.item.id}`))).status).toBe(200);
+  });
+});
+
+describe('صورت‌وضعیت‌ها', () => {
+  it('مالی ثبت می‌کند؛ مدیر پروژه و مدیریت فقط می‌بینند؛ بازرگانی و کارشناس نه', async () => {
+    const r = await w.fin.post(url('/payments'), { number: '۱', title: 'صورت‌وضعیت اول', sentDate: '2026-04-10', sentAmount: 1_000_000, status: 'sent' });
+    expect(r.status).toBe(201);
+    expect(r.body.item).toMatchObject({ number: '۱', sentAmount: 1_000_000, approvedAmount: null, receivedAmount: 0, status: 'sent', version: 1 });
+    const up = await w.fin.patch(url(`/payments/${r.body.item.id}`), { version: 1, approvedAmount: 900_000, receivedAmount: 400_000, receivedDate: '2026-04-20', status: 'approved' });
+    expect(up.body.item).toMatchObject({ approvedAmount: 900_000, receivedAmount: 400_000, version: 2 });
+    expect((await w.fin.patch(url(`/payments/${r.body.item.id}`), { version: 1, notes: 'کهنه' })).status).toBe(409);
+    expect((await w.fin.patch(url(`/payments/${r.body.item.id}`), { version: 2, approvedAmount: null })).body.item.approvedAmount).toBeNull();
+    for (const who of [w.pm, w.com, w.mgr, w.exp]) expect((await who.post(url('/payments'), { title: 'x' })).status).toBe(403);
+    expect((await getModel(w.pm, w.pid)).payments.length).toBe(1);
+    expect((await w.fin.post(url('/payments'), { sentAmount: -1 })).status).toBe(400);
+    expect((await w.fin.post(url('/payments'), { status: 'weird' })).status).toBe(400);
+    expect((await w.fin.post(url('/payments'), { sentDate: '2026-02-30' })).status).toBe(400);
+    expect((await getModel(w.com, w.pid)).payments).toBeUndefined();
+    expect((await getModel(w.mgr, w.pid)).payments.length).toBe(1);
+    expect((await getModel(w.exp, w.pid)).payments).toBeUndefined();
+    expect((await w.fin.del(url(`/payments/${r.body.item.id}`))).status).toBe(200);
+    expect((await w.fin.del(url(`/payments/${r.body.item.id}`))).status).toBe(404);
+  });
+});
+
+describe('تدارکات و سفارش‌ها', () => {
+  it('مدیر پروژه ثبت می‌کند؛ پیوند فعالیت بررسی می‌شود؛ بازرگانی و کارشناس نمی‌بینند', async () => {
+    const t = (await addTask(w.pm, w.pid, { name: 'نصب پمپ' })).id;
+    expect((await w.pm.post(url('/procurement'), { item: 'پمپ', taskId: 99999 })).body.error.code).toBe('UNKNOWN_TASK');
+    const r = await w.pm.post(url('/procurement'), { item: 'پمپ سانتریفیوژ', taskId: t, supplier: 'الف', orderNumber: 'PO-1', amount: 5_000_000, orderDate: '2026-04-01', plannedDelivery: '2026-05-01', status: 'ordered' });
+    expect(r.status).toBe(201);
+    expect(r.body.item).toMatchObject({ taskId: t, supplier: 'الف', amount: 5_000_000, actualDelivery: null, status: 'ordered' });
+    const up = await w.pm.patch(url(`/procurement/${r.body.item.id}`), { version: 1, actualDelivery: '2026-05-10', status: 'delivered' });
+    expect(up.body.item).toMatchObject({ actualDelivery: '2026-05-10', status: 'delivered', version: 2 });
+    expect((await w.pm.patch(url(`/procurement/${r.body.item.id}`), { version: 2, taskId: 99999 })).body.error.code).toBe('UNKNOWN_TASK');
+    for (const who of [w.fin, w.com, w.mgr, w.exp]) expect((await who.post(url('/procurement'), { item: 'x' })).status).toBe(403);
+    expect((await getModel(w.fin, w.pid)).procurement.length).toBe(1);
+    expect((await getModel(w.com, w.pid)).procurement).toBeUndefined();
+    expect((await getModel(w.exp, w.pid)).procurement).toBeUndefined();
+    // حذف فعالیت، قلم تدارکات را نگه می‌دارد و فقط پیوند را برمی‌دارد
+    const sv = (await w.pm.get(url(''))).body.project.structureVersion;
+    expect((await w.pm.del(url(`/tasks/${t}`), { structureVersion: sv })).status).toBe(200);
+    expect((await getModel(w.pm, w.pid)).procurement[0]).toMatchObject({ item: 'پمپ سانتریفیوژ', taskId: null });
+    expect((await w.pm.del(url(`/procurement/${r.body.item.id}`))).status).toBe(200);
+  });
+});
+
 describe('گفتگو', () => {
   it('همه‌ی نقش‌ها می‌نویسند؛ حذف نرم؛ پیام حذف‌شده بی‌محتوا می‌شود', async () => {
     const m1 = await w.com.post(url('/chat'), { body: '  سلام از بازرگانی  ' });

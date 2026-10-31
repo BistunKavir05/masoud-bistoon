@@ -156,6 +156,8 @@ export function modelFromMsp(parsed: MspParsed, opts: { today: IsoDate; name?: s
     changes: [],
     decisions: [],
     documents: [],
+    payments: [],
+    procurement: [],
   };
   const repaired = repairForStorage(draft);
   if (!repaired.ok) return { ok: false, error: repaired.error };

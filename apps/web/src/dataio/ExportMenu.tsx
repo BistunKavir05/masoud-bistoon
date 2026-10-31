@@ -21,6 +21,8 @@ const CSV_GATE: Record<CsvKind, Capability> = {
   changes: 'risks.view',
   decisions: 'risks.view',
   documents: 'documents.view',
+  payments: 'payments.view',
+  procurement: 'procurement.view',
   costs: 'costs.view',
 };
 
@@ -78,6 +80,8 @@ export function ExportMenu() {
     changes: model.changes.length,
     decisions: model.decisions.length,
     documents: model.documents.length,
+    payments: model.payments.length,
+    procurement: model.procurement.length,
     costs: model.costs.length,
   };
   const csvKinds = CSV_KINDS.filter((k) => can(CSV_GATE[k]));

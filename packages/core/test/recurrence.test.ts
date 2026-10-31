@@ -43,6 +43,8 @@ function model(tasks: Task[]): ProjectModel {
     changes: [],
     decisions: [],
     documents: [],
+    payments: [],
+    procurement: [],
   };
 }
 

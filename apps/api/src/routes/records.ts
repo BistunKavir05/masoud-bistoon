@@ -6,7 +6,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
-import { CHANGE_STATUSES, DECISION_STATUSES, ISSUE_PRIORITIES, ISSUE_STATUSES, RISK_CATEGORIES, RISK_STATUSES, RISK_STRATEGIES } from '@bistoon/core';
+import { CHANGE_STATUSES, DECISION_STATUSES, ISSUE_PRIORITIES, ISSUE_STATUSES, PAYMENT_STATUSES, PROCUREMENT_STATUSES, RISK_CATEGORIES, RISK_STATUSES, RISK_STRATEGIES } from '@bistoon/core';
 import type { Capability } from '@bistoon/core';
 import { actorInfo, diffFields, writeAudit } from '../audit.ts';
 import type { Db } from '../db.ts';
@@ -14,8 +14,8 @@ import { one, withTx } from '../db.ts';
 import { badRequest, forbidden, notFound, versionConflict } from '../errors.ts';
 import { actorOf, intParam, projectOf } from '../http/types.ts';
 import { projectAccess, requireCap } from '../middleware.ts';
-import { isoDateOrNull, text, version } from '../schemas.ts';
-import { loadChanges, loadDecisions, loadIssues, loadRisks } from '../services/store.ts';
+import { isoDateOrNull, money, posInt, text, version } from '../schemas.ts';
+import { loadChanges, loadDecisions, loadIssues, loadPayments, loadProcurement, loadRisks } from '../services/store.ts';
 
 interface Field {
   dto: string;
@@ -33,6 +33,13 @@ interface Spec {
   /** فیلدهایی که فقط با قابلیت‌های دیگری قابل تغییرند */
   restricted?: { fields: string[]; caps: Capability[] };
   load: (db: Db, pid: number) => Promise<{ id: number; version: number }[]>;
+  /** بررسی‌های وابسته به پایگاه‌داده (مثلاً وجود فعالیت) پیش از نوشتن؛ `body` فقط فیلدهای ارسال‌شده است */
+  check?: (tx: Db, pid: number, body: Record<string, unknown>) => Promise<void>;
+}
+
+async function assertTask(tx: Db, pid: number, taskId: unknown): Promise<void> {
+  if (taskId === null || taskId === undefined) return;
+  if (!(await one(tx, 'SELECT 1 FROM tasks WHERE project_id = $1 AND id = $2', [pid, taskId]))) throw badRequest('فعالیت انتخاب‌شده وجود ندارد.', undefined, 'UNKNOWN_TASK');
 }
 
 const long = z.string().max(20000);
@@ -111,6 +118,46 @@ const SPECS: Spec[] = [
       { dto: 'status', col: 'status', schema: z.enum(DECISION_STATUSES) },
     ],
   },
+  {
+    path: 'payments',
+    table: 'payments',
+    counter: 'payment',
+    entity: 'payment',
+    editCaps: ['payments.edit'],
+    load: loadPayments,
+    fields: [
+      { dto: 'number', col: 'number', schema: text(40) },
+      { dto: 'title', col: 'title', schema: text(200) },
+      { dto: 'sentDate', col: 'sent_date', schema: isoDateOrNull },
+      { dto: 'sentAmount', col: 'sent_amount', schema: money },
+      { dto: 'approvedAmount', col: 'approved_amount', schema: money.nullable() },
+      { dto: 'receivedAmount', col: 'received_amount', schema: money },
+      { dto: 'receivedDate', col: 'received_date', schema: isoDateOrNull },
+      { dto: 'status', col: 'status', schema: z.enum(PAYMENT_STATUSES) },
+      { dto: 'notes', col: 'notes', schema: text(2000) },
+    ],
+  },
+  {
+    path: 'procurement',
+    table: 'procurement_items',
+    counter: 'procurement',
+    entity: 'procurement',
+    editCaps: ['procurement.edit'],
+    load: loadProcurement,
+    check: (tx, pid, body) => assertTask(tx, pid, body['taskId']),
+    fields: [
+      { dto: 'item', col: 'item', schema: text(200) },
+      { dto: 'taskId', col: 'task_id', schema: posInt.nullable() },
+      { dto: 'supplier', col: 'supplier', schema: text(200) },
+      { dto: 'orderNumber', col: 'order_number', schema: text(60) },
+      { dto: 'amount', col: 'amount', schema: money },
+      { dto: 'orderDate', col: 'order_date', schema: isoDateOrNull },
+      { dto: 'plannedDelivery', col: 'planned_delivery', schema: isoDateOrNull },
+      { dto: 'actualDelivery', col: 'actual_delivery', schema: isoDateOrNull },
+      { dto: 'status', col: 'status', schema: z.enum(PROCUREMENT_STATUSES) },
+      { dto: 'notes', col: 'notes', schema: text(2000) },
+    ],
+  },
 ];
 
 function checkRestricted(spec: Spec, caps: readonly Capability[], given: string[]): void {
@@ -138,6 +185,7 @@ export function recordsRouter(pool: Pool): Router {
       const given = Object.keys(body).filter((k) => body[k] !== undefined);
       checkRestricted(spec, access.capabilities, given);
       const item = await withTx(pool, async (tx) => {
+        await spec.check?.(tx, access.id, body);
         const id = (await one<{ n: number }>(tx, 'SELECT next_seq($1, $2) AS n', [access.id, spec.counter]))!.n;
         const cols = ['project_id', 'id', 'updated_by', ...given.map((g) => colOf.get(g)!)];
         const vals = [access.id, id, actorOf(req).id, ...given.map((g) => body[g])];
@@ -161,6 +209,7 @@ export function recordsRouter(pool: Pool): Router {
         if (!cur) throw notFound('مورد پیدا نشد.', 'NOT_FOUND');
         const before = (await spec.load(tx, access.id)).find((x) => x.id === id)!;
         if (cur.version !== expected) throw versionConflict(before);
+        await spec.check?.(tx, access.id, body);
         const sets = given.map((g, i) => `${colOf.get(g)} = $${i + 3}`);
         const vals = [access.id, id, ...given.map((g) => body[g])];
         await tx.query(

@@ -9,7 +9,9 @@ import { toCsv } from './csv.ts';
 import type { IsoDate } from './date.ts';
 import { formatJalali } from './jalali.ts';
 import type { Analysis, ProjectModel } from './project.ts';
-import { DOCUMENT_TYPE_LABELS } from './project.ts';
+import { PAYMENT_STATUS_LABELS, paymentReceivable } from './payments.ts';
+import { PROCUREMENT_STATUS_LABELS, procurementDelayDays } from './procurement.ts';
+import { DOCUMENT_STATUS_LABELS, DOCUMENT_TYPE_LABELS } from './project.ts';
 import {
   CHANGE_STATUS_LABELS,
   DECISION_STATUS_LABELS,
@@ -22,7 +24,7 @@ import {
 import { wbsMap } from './structure.ts';
 import type { CostEntry, Task } from './types.ts';
 
-export const CSV_KINDS = ['tasks', 'risks', 'issues', 'changes', 'decisions', 'documents', 'costs'] as const;
+export const CSV_KINDS = ['tasks', 'risks', 'issues', 'changes', 'decisions', 'documents', 'payments', 'procurement', 'costs'] as const;
 export type CsvKind = (typeof CSV_KINDS)[number];
 
 export const CSV_KIND_LABELS: Record<CsvKind, string> = {
@@ -32,6 +34,8 @@ export const CSV_KIND_LABELS: Record<CsvKind, string> = {
   changes: 'درخواست‌های تغییر',
   decisions: 'تصمیم‌ها',
   documents: 'مستندات',
+  payments: 'صورت‌وضعیت‌ها و دریافتی‌ها',
+  procurement: 'تدارکات و سفارش‌ها',
   costs: 'هزینه‌های واقعی',
 };
 
@@ -115,10 +119,29 @@ export function documentCsvRows(model: ProjectModel): CsvValue[][] {
   const wbs = wbsMap(model.tasks);
   const byId = new Map(model.tasks.map((t) => [t.id, t]));
   return [
-    ['عنوان', 'نوع', 'لینک', 'فعالیت', 'تاریخ', 'تاریخ شمسی'],
+    ['عنوان', 'نوع', 'لینک', 'فعالیت', 'تاریخ', 'تاریخ شمسی', 'شماره', 'ویرایش', 'ارسال‌کننده', 'دریافت‌کننده', 'وضعیت'],
     ...model.documents.map((d) => {
       const t = d.taskId === null ? undefined : byId.get(d.taskId);
-      return [d.title, DOCUMENT_TYPE_LABELS[d.type], d.url, t ? `${wbs.get(t.id) ?? ''} ${t.name}`.trim() : '', ...dates(d.date)];
+      return [d.title, DOCUMENT_TYPE_LABELS[d.type], d.url, t ? `${wbs.get(t.id) ?? ''} ${t.name}`.trim() : '', ...dates(d.date), d.number, d.revision, d.sender, d.receiver, d.status ? DOCUMENT_STATUS_LABELS[d.status] : ''];
+    }),
+  ];
+}
+
+export function paymentCsvRows(model: ProjectModel): CsvValue[][] {
+  return [
+    ['شماره', 'شرح', 'تاریخ ارسال', 'تاریخ ارسال شمسی', 'مبلغ ارسالی', 'مبلغ تأییدشده', 'مبلغ دریافتی', 'تاریخ دریافت', 'تاریخ دریافت شمسی', 'مانده‌ی مطالبات', 'وضعیت', 'توضیحات'],
+    ...model.payments.map((p) => [p.number, p.title, ...dates(p.sentDate), p.sentAmount, p.approvedAmount ?? '', p.receivedAmount, ...dates(p.receivedDate), paymentReceivable(p), PAYMENT_STATUS_LABELS[p.status], p.notes]),
+  ];
+}
+
+export function procurementCsvRows(model: ProjectModel): CsvValue[][] {
+  const wbs = wbsMap(model.tasks);
+  const byId = new Map(model.tasks.map((t) => [t.id, t]));
+  return [
+    ['قلم/خدمت', 'فعالیت', 'تأمین‌کننده', 'شماره‌ی سفارش', 'مبلغ', 'تاریخ سفارش', 'تاریخ سفارش شمسی', 'تحویل برنامه‌ای', 'تحویل برنامه‌ای شمسی', 'تحویل واقعی', 'تحویل واقعی شمسی', 'وضعیت', 'تأخیر (روز تقویمی)', 'توضیحات'],
+    ...model.procurement.map((p) => {
+      const t = p.taskId === null ? undefined : byId.get(p.taskId);
+      return [p.item, t ? `${wbs.get(t.id) ?? ''} ${t.name}`.trim() : '', p.supplier, p.orderNumber, p.amount, ...dates(p.orderDate), ...dates(p.plannedDelivery), ...dates(p.actualDelivery), PROCUREMENT_STATUS_LABELS[p.status], procurementDelayDays(p, model.status) ?? '', p.notes];
     }),
   ];
 }
@@ -164,6 +187,12 @@ export function buildCsv(kind: CsvKind, model: ProjectModel, analysis: Pick<Anal
       break;
     case 'documents':
       rows = documentCsvRows(model);
+      break;
+    case 'payments':
+      rows = paymentCsvRows(model);
+      break;
+    case 'procurement':
+      rows = procurementCsvRows(model);
       break;
     case 'costs':
       if (!opts.canSeeCosts) return { ok: true, text: '﻿', rows: 0 };

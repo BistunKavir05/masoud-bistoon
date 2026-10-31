@@ -137,6 +137,17 @@ SELECT pg_temp.expect_error('risk probability range', $$INSERT INTO risks (proje
 SELECT pg_temp.expect_error('risk status enum', $$INSERT INTO risks (project_id, id, status) VALUES (1, 1, 'weird')$$, '23514');
 SELECT pg_temp.expect_error('document url scheme', $$INSERT INTO project_documents (project_id, id, title, url) VALUES (1, 1, 't', 'javascript:alert(1)')$$, '23514');
 INSERT INTO project_documents (project_id, id, title, url, task_id) VALUES (1, 1, 'نقشه', 'https://example.com/a.pdf', 2);
+SELECT pg_temp.expect_error('document type enum', $$INSERT INTO project_documents (project_id, id, title, url, doc_type) VALUES (1, 2, 't', '', 'weird')$$, '23514');
+INSERT INTO project_documents (project_id, id, title, url, doc_type, sender, receiver, doc_number, revision, doc_status) VALUES (1, 3, 'نامه‌ی کارفرما', '', 'letter', 'کارفرما', 'پیمانکار', 'ن-۱۲', 'A', 'received');
+SELECT pg_temp.expect_error('document status enum', $$UPDATE project_documents SET doc_status = 'x' WHERE project_id = 1 AND id = 3$$, '23514');
+INSERT INTO payments (project_id, id, number, sent_amount, status) VALUES (1, 1, '1', 1000, 'sent');
+SELECT pg_temp.expect_error('payment status enum', $$INSERT INTO payments (project_id, id, status) VALUES (1, 2, 'weird')$$, '23514');
+SELECT pg_temp.expect_error('payment amount non-negative', $$INSERT INTO payments (project_id, id, sent_amount) VALUES (1, 2, -1)$$, '23514');
+INSERT INTO tasks (project_id, id, position, name, level, kind, duration, weight) VALUES (1, 50, 50, 'خرید پمپ', 1, 'task', 1, 1);
+INSERT INTO procurement_items (project_id, id, item, task_id) VALUES (1, 1, 'پمپ', 50);
+SELECT pg_temp.expect_error('procurement status enum', $$INSERT INTO procurement_items (project_id, id, status) VALUES (1, 2, 'weird')$$, '23514');
+DELETE FROM tasks WHERE project_id = 1 AND id = 50;
+SELECT pg_temp.expect_true('procurement survives task deletion', (SELECT count(*) FROM procurement_items WHERE project_id = 1 AND id = 1 AND task_id IS NULL) = 1);
 SELECT pg_temp.expect_error('chat body required', $$INSERT INTO chat_messages (project_id, id, user_id, body) VALUES (1, 1, 2, '   ')$$, '23514');
 
 -- ───── ممیزی فقط-افزودنی

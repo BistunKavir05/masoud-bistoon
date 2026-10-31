@@ -52,6 +52,8 @@ function model(tasks: TaskDto[], over: Partial<ProjectModel> = {}): ProjectModel
     changes: [],
     decisions: [],
     documents: [],
+    payments: [],
+    procurement: [],
     ...over,
   };
 }

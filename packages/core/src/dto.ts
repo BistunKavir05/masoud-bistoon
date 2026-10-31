@@ -8,6 +8,8 @@ import type { IsoDate } from './date.ts';
 import type { EacMethod } from './finance.ts';
 import type { MspCounts, MspWarning } from './msp.ts';
 import type { MspBlocker, MspEffect, MspMapping, MspMappingStats, MspPlan, MspRemoved, MspSchedulePreview } from './mspImport.ts';
+import type { Payment } from './payments.ts';
+import type { ProcurementItem } from './procurement.ts';
 import type { ProjectDocument } from './project.ts';
 import type { ChangeRequest, Decision, Issue, Risk } from './records.ts';
 import type { RepairWarning } from './repair.ts';
@@ -71,6 +73,8 @@ export type IssueDto = Issue & { version: number };
 export type ChangeRequestDto = ChangeRequest & { version: number };
 export type DecisionDto = Decision & { version: number };
 export type DocumentDto = ProjectDocument;
+export type PaymentDto = Payment & { version: number };
+export type ProcurementItemDto = ProcurementItem & { version: number };
 
 export interface StageSummary {
   id: number;
@@ -124,6 +128,8 @@ export interface ModelBundle {
   changes?: ChangeRequestDto[];
   decisions?: DecisionDto[];
   documents?: DocumentDto[];
+  payments?: PaymentDto[];
+  procurement?: ProcurementItemDto[];
 }
 
 export interface ApiErrorBody {
@@ -187,6 +193,8 @@ export interface ImportSummary {
   changes?: number;
   decisions?: number;
   documents?: number;
+  payments?: number;
+  procurement?: number;
   baselineHistory?: number;
   legacyLog?: number;
 }

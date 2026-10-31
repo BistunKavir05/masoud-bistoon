@@ -57,6 +57,8 @@ export function buildModel(b: ModelBundle): ProjectModel | null {
     changes: b.changes ?? [],
     decisions: b.decisions ?? [],
     documents: b.documents ?? [],
+    payments: b.payments ?? [],
+    procurement: b.procurement ?? [],
   };
 }
 

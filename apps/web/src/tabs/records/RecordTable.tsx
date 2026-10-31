@@ -24,6 +24,8 @@ export interface FieldDef<T extends Versioned> {
   maxLength?: number;
   wide?: boolean;
   hint?: string;
+  /** برای num/int: خالی‌گذاشتن مجاز است و مقدار null می‌شود */
+  nullable?: boolean;
   /** فقط با این شرط در فرم دیده می‌شود */
   when?: boolean;
 }
@@ -105,7 +107,7 @@ function RecordForm<T extends Versioned>({ cfg, row, close }: { cfg: FormSpec<T>
             case 'int':
               return <NumberField key={f.key} {...common} value={typeof v === 'number' ? v : null} integer min={f.min} max={f.max} onChange={(x) => set(f.key, x)} />;
             case 'num':
-              return <NumberField key={f.key} {...common} value={typeof v === 'number' ? v : null} min={f.min} max={f.max} maxFraction={2} onChange={(x) => set(f.key, x)} />;
+              return <NumberField key={f.key} {...common} value={typeof v === 'number' ? v : null} min={f.min} max={f.max} maxFraction={2} allowEmpty={f.nullable} onChange={(x) => set(f.key, x)} />;
             case 'date':
               return <DateField key={f.key} {...common} value={(v as string | null) ?? null} allowEmpty onChange={(x) => set(f.key, x)} />;
             case 'bool':

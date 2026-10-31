@@ -15,6 +15,8 @@ const P: Record<string, ReactNode> = {
   report: <><path d="M7 3h10v18H7z" /><path d="M10 8h4M10 12h4M10 16h2" /></>,
   chat: <><path d="M4 5h16v11H9l-5 4z" /></>,
   docs: <><path d="M10 14a4 4 0 0 0 5.700 0l3-3a4 4 0 0 0-5.700-5.700l-1 1" /><path d="M14 10a4 4 0 0 0-5.700 0l-3 3a4 4 0 0 0 5.700 5.700l1-1" /></>,
+  payments: <><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.500" /><path d="M6 9.500v5M18 9.500v5" /></>,
+  procurement: <><path d="M3 4h2.500l2 11h10l2-8H7" /><circle cx="9.500" cy="19" r="1.300" /><circle cx="16.500" cy="19" r="1.300" /></>,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.600-7 8-7s8 3 8 7" /></>,
   portfolio: <><path d="M3 7h6l2 2h10v10H3z" /></>,
   history: <><path d="M3 12a9 9 0 1 0 3-6.700L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,

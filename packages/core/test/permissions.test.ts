@@ -51,4 +51,18 @@ describe('ماتریس دسترسی', () => {
     expect(can(['management'], 'commission.approve')).toBe(true);
     expect(isMutation('commission.approve')).toBe(true);
   });
+
+  it('صورت‌وضعیت و تدارکات: مالی صورت‌وضعیت را ثبت می‌کند، مدیر پروژه تدارکات را؛ بازرگانی و کارشناس هیچ‌کدام را نمی‌بینند', () => {
+    expect(can(['finance'], 'payments.edit')).toBe(true);
+    expect(can(['pm'], 'payments.edit')).toBe(false);
+    expect(can(['pm'], 'payments.view')).toBe(true);
+    expect(can(['management'], 'payments.view')).toBe(true);
+    expect(can(['management'], 'payments.edit')).toBe(false);
+    expect(can(['pm'], 'procurement.edit')).toBe(true);
+    expect(can(['finance'], 'procurement.edit')).toBe(false);
+    expect(can(['finance'], 'procurement.view')).toBe(true);
+    for (const r of ['commerce', 'expert'] as const) for (const c of ['payments.view', 'payments.edit', 'procurement.view', 'procurement.edit'] as const) expect(can([r], c)).toBe(false);
+    expect(isMutation('payments.edit')).toBe(true);
+    expect(isMutation('procurement.edit')).toBe(true);
+  });
 });
